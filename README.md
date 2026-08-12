@@ -3,38 +3,39 @@
 Sistema de gestión para el Despacho del Gobernador: correspondencia, dependencias,
 presupuesto, control ciudadano y ayudas sociales.
 
-## ⚠️ Problema #1 a resolver — probablemente la causa principal de que "casi no funcione"
+## Estado del guardado — ya resuelto
 
-Este proyecto se construyó y se probó **dentro del entorno de artifacts de Claude.ai**,
-que le da al HTML dos capacidades que **NO existen en un navegador normal ni en un
-servidor propio**:
+Este proyecto se construyó y se probó originalmente **dentro del entorno de artifacts
+de Claude.ai**, que le daba al HTML dos capacidades que **no existen en un navegador
+normal ni en un servidor propio**. Ambas fueron auditadas en un navegador real (fuera
+de Claude.ai) y confirmadas rotas; la primera ya se corrigió:
 
-1. **`window.storage.get/set/delete/list`** — así es como se guarda todo (documentos,
-   dependencias, ayudas, peticiones, organismos). Está usado en `js/app.js` dentro de
-   `loadData()` y `persist()`. Fuera de Claude.ai, `window.storage` es `undefined`.
-   El código tiene un `try/catch` que evita que truene, pero eso significa que
-   **nada se guarda nunca** — cada vez que se recarga la página, todo vuelve a los
-   datos de ejemplo. Esto es casi seguro la razón de que se sienta roto.
+1. **Guardado — corregido.** `window.storage.get/set` (usado en `loadData()` y
+   `persist()` de `js/app.js`) era `undefined` fuera de Claude.ai, así que nada se
+   guardaba nunca — confirmado en auditoría real de navegador (cada llamada a
+   `persist()` lanzaba `TypeError`, silenciado por el `try/catch`). Se reemplazó por
+   `localStorage`: ahora todo se guarda de verdad y sobrevive recargas de página,
+   **siempre que sea en el mismo navegador y la misma computadora** — los datos no
+   se sincronizan entre distintos equipos. Si varias personas van a usar el sistema
+   desde computadoras distintas y necesitan ver los mismos datos, hace falta un
+   backend pequeño (Node/Express + SQLite, por ejemplo) con una base de datos
+   compartida; no está implementado todavía porque implica que alguien lo aloje y lo
+   mantenga corriendo (un VPS o similar), y esa decisión de infraestructura le
+   corresponde a quien vaya a operar el sistema.
 
-   → Hay que reemplazarlo por algo real: `localStorage`/`IndexedDB` en el navegador
-   (más simple, pero solo funciona en ese navegador/computadora), o mejor, un backend
-   pequeño (Node/Express + un archivo JSON o SQLite) si esto lo van a usar varias
-   personas desde distintos computadores.
-
-2. **`fetch("https://api.anthropic.com/v1/messages")` sin API key** — así es como
-   funciona "Generar oficio con IA" en Control Ciudadano (función `generarOficio` en
-   `js/app.js`). Dentro de Claude.ai esa llamada se autentica sola; fuera de ahí, no
-   tiene credenciales y siempre va a caer en el `catch` (que por diseño genera una
-   plantilla básica en su lugar — no truena, pero tampoco usa IA real).
-
-   → Para que la generación con IA funcione de verdad fuera de Claude.ai, hace falta
-   un backend propio que reciba la petición del navegador, llame a la API de
-   Anthropic con una API key guardada del lado del servidor (nunca en el navegador),
-   y devuelva el texto. Es un endpoint pequeño, no gran cosa, pero es indispensable.
+2. **IA del oficio — sigue pendiente, es de esperarse.** `fetch("https://api.anthropic.com/v1/messages")`
+   sin API key (función `generarOficio` en `js/app.js`) — confirmado en la misma
+   auditoría que falla fuera de Claude.ai (sin credenciales) y cae en el `catch`, que
+   por diseño genera una plantilla básica editable en su lugar. Esto es intencional y
+   no rompe nada; el botón "Generar oficio" sigue siendo útil tal cual. Para que
+   redacte con IA real fuera de Claude.ai hace falta un backend propio que reciba la
+   petición del navegador, llame a la API de Anthropic con una API key guardada del
+   lado del servidor (nunca en el navegador) y devuelva el texto — mismo backend que
+   resolvería el punto 1 si se decide construirlo.
 
 Todo lo demás (generación de PDF con jsPDF, links de Telegram, el login, toda la
-lógica de negocio) es JavaScript normal y debería funcionar igual en cualquier
-navegador moderno.
+lógica de negocio) es JavaScript normal y funciona igual en cualquier navegador
+moderno — confirmado botón por botón en las 9 secciones del menú.
 
 ## Qué NO debe volver
 
@@ -118,18 +119,19 @@ ciudadana (`notificarCiudadanoTelegram`).
 
 - **jsPDF** (`https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js`)
   se carga dinámicamente solo cuando se pulsa "Descargar PDF" (función
-  `ensureJsPDF()` en `js/app.js`). Requiere internet la primera vez; si falla, avisa
-  con un toast en vez de tronar.
+  `ensureJsPDF()` en `js/app.js`). Requiere internet la primera vez; si falla o tarda
+  más de 8 segundos en responder, avisa con un toast en vez de dejar el botón
+  colgado indefinidamente.
 
-## Cómo probarlo mientras se arregla
+## Cómo probarlo
 
-No se puede simplemente abrir `index.html` con doble clic y esperar que todo
-funcione (ver Problema #1). Para probar mientras tanto:
+No se puede simplemente abrir `index.html` con doble clic — las rutas relativas a
+`css/`, `js/` y `assets/` necesitan servirse por HTTP:
 
 ```bash
 python3 -m http.server 8000
 # luego abrir http://localhost:8000 en el navegador
 ```
 
-Esto resuelve rutas relativas correctamente, pero **no** resuelve el problema del
-guardado — para eso hace falta el reemplazo de `window.storage` mencionado arriba.
+El guardado (localStorage) funciona igual con doble clic o con servidor; lo que no
+funciona con doble clic (protocolo `file://`) son las rutas relativas de arriba.

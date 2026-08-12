@@ -258,9 +258,9 @@ function seedState(){
 /* ============ PERSISTENCE ============ */
 async function loadData(){
   try{
-    const res = await window.storage.get(STORAGE_KEY, false);
-    if(res){
-      STATE = JSON.parse(res.value);
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      STATE = JSON.parse(raw);
     } else {
       STATE = seedState();
       bindState();
@@ -275,10 +275,10 @@ async function loadData(){
 
 async function persist(){
   try{
-    await window.storage.set(STORAGE_KEY, JSON.stringify(STATE), false);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
   }catch(e){
     console.error('Error al guardar', e);
-    showToast('No se pudo guardar el cambio. Intenta de nuevo.');
+    showToast('No se pudo guardar el cambio. Verifica el espacio de almacenamiento del navegador.');
   }
 }
 
@@ -886,11 +886,14 @@ function ensureJsPDF(){
   if(window.jspdf && window.jspdf.jsPDF) return Promise.resolve(true);
   if(jsPdfLoadPromise) return jsPdfLoadPromise;
   jsPdfLoadPromise = new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok) => { if(settled) return; settled = true; resolve(ok); };
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    script.onload = () => resolve(!!(window.jspdf && window.jspdf.jsPDF));
-    script.onerror = () => resolve(false);
+    script.onload = () => finish(!!(window.jspdf && window.jspdf.jsPDF));
+    script.onerror = () => finish(false);
     document.head.appendChild(script);
+    setTimeout(() => finish(!!(window.jspdf && window.jspdf.jsPDF)), 8000);
   });
   return jsPdfLoadPromise;
 }
