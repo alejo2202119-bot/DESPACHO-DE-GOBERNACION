@@ -1346,6 +1346,56 @@ document.getElementById('pet-search').addEventListener('input', renderControlCiu
 document.getElementById('pet-filter-estado').addEventListener('change', renderControlCiudadano);
 document.getElementById('pet-filter-medio').addEventListener('change', renderControlCiudadano);
 
+/* ============ RESPALDO (compartir datos entre computadoras a mano) ============ */
+function descargarRespaldo(){
+  const json = JSON.stringify(STATE, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const fecha = new Date().toISOString().slice(0,10);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'despacho-datos-' + fecha + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Datos descargados: ' + a.download);
+}
+
+async function cargarRespaldoArchivo(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    let nuevoEstado;
+    try{
+      nuevoEstado = JSON.parse(reader.result);
+    }catch(e){
+      showToast('Ese archivo no se pudo leer como respaldo del Despacho Digital.');
+      return;
+    }
+    const camposEsperados = ['documentos','dependencias','ayudas','partidas','organismos','peticiones'];
+    const valido = camposEsperados.every(c => Array.isArray(nuevoEstado[c]));
+    if(!valido){
+      showToast('Ese archivo no tiene el formato de un respaldo del Despacho Digital.');
+      return;
+    }
+    if(!confirm('Esto reemplaza todos los datos que ves ahora mismo por los del archivo. ¿Continuar?')) return;
+    STATE = nuevoEstado;
+    bindState();
+    await persist();
+    populateSelects();
+    renderAll();
+    showToast('Datos cargados desde el archivo');
+  };
+  reader.onerror = () => showToast('No se pudo leer el archivo.');
+  reader.readAsText(file);
+}
+
+document.getElementById('respaldo-file-input').addEventListener('change', (e) => {
+  cargarRespaldoArchivo(e.target.files[0]);
+  e.target.value = '';
+});
+
 /* ============ LOGIN ============ */
 const LOGIN_USER = 'ISAAC';
 const LOGIN_PASS = 'DESPACHOG';

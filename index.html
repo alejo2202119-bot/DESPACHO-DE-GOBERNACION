@@ -46,6 +46,11 @@
       <button class="navitem" data-view="nuevo"><span>➕ Nueva Entrada</span></button>
       <button class="navitem" data-view="archivo"><span>🗄 Archivo</span></button>
     </div>
+    <div class="sidebar-sync">
+      <button class="btn small" onclick="descargarRespaldo()">⬇️ Descargar datos</button>
+      <button class="btn small" onclick="document.getElementById('respaldo-file-input').click()">⬆️ Cargar datos</button>
+      <input type="file" id="respaldo-file-input" accept="application/json" style="display:none;">
+    </div>
     <button class="btn small sidebar-logout" onclick="cerrarSesion()">Cerrar sesión</button>
   </nav>
 
@@ -62,6 +67,15 @@
         <li><strong>Casi todo se puede editar después.</strong> Estados, avances, contactos, textos — nada queda fijo para siempre.</li>
         <li><strong>Nunca se envía nada solo.</strong> Cuando el sistema arma un mensaje de Telegram, siempre te lo muestra primero en la pantalla para que tú decidas copiarlo o mandarlo. No hay envíos automáticos a tus espaldas.</li>
       </ul>
+    </div>
+
+    <div class="guide-section" id="guia-compartir">
+      <h4>🔄 Cómo mostrarle esto a otra persona (jefe, compañero) desde otra computadora</h4>
+      <p class="guide-what"><strong>¿Por qué hace falta esto?</strong> Los datos se guardan en el navegador de cada computadora por separado. Si tú registras algo aquí, la persona que abre el mismo enlace desde otra computadora no lo ve automáticamente — hay que pasárselo.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">⬇️ Descargar datos</span><span class="gb-desc">Baja un archivo con todo lo que tienes registrado hasta ahora (documentos, dependencias, ayudas, peticiones, todo). Mándaselo a la otra persona por donde sea más cómodo: Telegram, correo, USB.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">⬆️ Cargar datos</span><span class="gb-desc">La otra persona abre el mismo enlace, aprieta este botón, elige el archivo que le mandaste, y ve exactamente lo mismo que tú. Reemplaza lo que tenía antes en su navegador, así que confirma antes de aplicar.</span></div>
+      </div>
     </div>
 
     <div class="guide-section">

@@ -56,6 +56,8 @@
   }
   .navitem.active .count{background:var(--navy);color:#fff;}
   .sidebar-logout{margin-top:auto;width:100%;}
+  .sidebar-sync{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line);}
+  .sidebar-sync .btn{width:100%;}
 
   /* MAIN CONTENT */
   .main-content{flex:1;min-width:0;max-width:1040px;padding:26px 28px 60px;}
