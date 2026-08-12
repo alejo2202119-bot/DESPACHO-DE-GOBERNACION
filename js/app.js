@@ -1255,6 +1255,19 @@ function renderArchivo(){
       if(d.notas){
         rows += '<div style="margin-top:8px;font-size:12px;color:var(--slate);"><strong>Notas:</strong> ' + escapeHtml(d.notas) + '</div>';
       }
+      rows += '<div style="margin-top:10px;">';
+      if(d.estado === 'recibido'){
+        rows += '<div style="font-size:11.5px;color:var(--slate);margin-bottom:6px;">Este documento todavía no está en la Bandeja del Gobernador — primero pasa por revisión.</div>';
+        rows += '<button class="btn small" onclick="event.stopPropagation();cambiarEstado(' + d.id + ', \'en_revision\')">Marcar en revisión</button>';
+      } else if(d.estado === 'en_revision'){
+        rows += '<div style="font-size:11.5px;color:var(--slate);margin-bottom:6px;">Ya fue revisado — este botón lo manda a la Bandeja del Gobernador para su decisión.</div>';
+        rows += '<button class="btn small primary" onclick="event.stopPropagation();cambiarEstado(' + d.id + ', \'en_despacho\')">Elevar a Bandeja del Gobernador</button>';
+      } else if(d.estado === 'en_despacho'){
+        rows += '<div style="font-size:11.5px;color:var(--ok);">Está en la Bandeja del Gobernador, esperando decisión.</div>';
+      } else if(d.estado === 'decidido'){
+        rows += '<button class="btn small" onclick="event.stopPropagation();cambiarEstado(' + d.id + ', \'archivado\')">Archivar</button>';
+      }
+      rows += '</div>';
       rows += '</td></tr>';
     }
     return rows;

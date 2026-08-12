@@ -124,7 +124,7 @@
 
     <div class="guide-section">
       <h4>📥 Bandeja del Gobernador</h4>
-      <p class="guide-what"><strong>¿Qué es?</strong> Todo lo que está esperando la firma o decisión del Gobernador, ordenado por prioridad y por lo próximo a vencer.</p>
+      <p class="guide-what"><strong>¿Qué es?</strong> Solo lo que ya está listo para que el Gobernador decida — no todo lo que se registra aparece aquí de inmediato. Un documento nuevo entra como "Recibido" y hay que avanzarlo (ver "Nueva Entrada" y "Tablero" más abajo) antes de que llegue a esta Bandeja.</p>
       <div class="guide-buttons">
         <div class="guide-btn-row"><span class="gb-name">Aprobar / Rechazar</span><span class="gb-desc">La decisión del Gobernador sobre ese documento.</span></div>
         <div class="guide-btn-row"><span class="gb-name">Derivar</span><span class="gb-desc">Lo manda a otra dirección para que lo revisen antes de decidir.</span></div>
@@ -133,9 +133,9 @@
 
     <div class="guide-section">
       <h4>📋 Tablero</h4>
-      <p class="guide-what"><strong>¿Qué es?</strong> La misma correspondencia que ves en la Bandeja, pero como columnas de avance: Recibido → En Revisión → En Despacho → Decidido → Archivado.</p>
+      <p class="guide-what"><strong>¿Qué es?</strong> La misma correspondencia que ves en la Bandeja y en el Archivo, pero como columnas de avance: Recibido → En Revisión → En Despacho → Decidido → Archivado. <strong>Aquí es donde avanzas un documento hasta que llegue a la Bandeja del Gobernador</strong> (columna "En Despacho").</p>
       <div class="guide-buttons">
-        <div class="guide-btn-row"><span class="gb-name">Menú de cada tarjeta</span><span class="gb-desc">Cambia el estado de ese documento, moviéndolo de una columna a otra.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Menú de cada tarjeta</span><span class="gb-desc">Cambia el estado de ese documento, moviéndolo de una columna a otra — así es como un documento "Recibido" pasa a "En Revisión" y luego a "En Despacho" (donde ya aparece en la Bandeja).</span></div>
       </div>
     </div>
 
@@ -143,7 +143,7 @@
       <h4>➕ Nueva Entrada</h4>
       <p class="guide-what"><strong>¿Qué es?</strong> El formulario para registrar cualquier documento que entre al Despacho: punto de cuenta, oficio, memorando, gaceta, resolución, decreto, informe, solicitud, contrato o convenio.</p>
       <div class="guide-buttons">
-        <div class="guide-btn-row"><span class="gb-name">Registrar documento</span><span class="gb-desc">Le asigna un número de seguimiento solo (por ejemplo DES-2026-0001) y queda visible en la Bandeja y en el Tablero.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Registrar documento</span><span class="gb-desc">Le asigna un número de seguimiento solo (por ejemplo DES-2026-0001) y queda visible en el Tablero y en el Archivo, con estado "Recibido" — <strong>todavía no aparece en la Bandeja del Gobernador.</strong> Para que llegue ahí, avánzalo desde el Tablero o desde el Archivo (ver más abajo).</span></div>
       </div>
     </div>
 
@@ -152,7 +152,7 @@
       <p class="guide-what"><strong>¿Qué es?</strong> La búsqueda de todo lo que ha pasado por el Despacho, sin importar en qué estado esté.</p>
       <div class="guide-buttons">
         <div class="guide-btn-row"><span class="gb-name">Buscador y filtro</span><span class="gb-desc">Escribe cualquier palabra del asunto, remitente o número, y filtra por estado.</span></div>
-        <div class="guide-btn-row"><span class="gb-name">Clic sobre una fila</span><span class="gb-desc">Muestra la trazabilidad completa: quién tocó ese documento y cuándo, desde que entró hasta hoy.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Clic sobre una fila</span><span class="gb-desc">Muestra la trazabilidad completa: quién tocó ese documento y cuándo, desde que entró hasta hoy. Si el documento está "Recibido" o "En Revisión", aquí mismo aparece un botón para avanzarlo — es la forma más directa de llevar un documento hasta la Bandeja del Gobernador, sin tener que ir al Tablero.</span></div>
       </div>
     </div>
   </div>
@@ -374,6 +374,7 @@
   <div class="view" id="view-bandeja">
     <h2 class="view-title">Bandeja del Gobernador</h2>
     <p class="view-sub">Documentos que requieren su firma o decisión, ordenados por prioridad y vencimiento.</p>
+    <div class="telegram-note">¿No encuentras un documento que acabas de registrar? Todavía no llega aquí solo — hay que avanzarlo primero desde "Archivo" o el "Tablero" (Recibido → En Revisión → En Despacho).</div>
     <div class="inbox-list" id="inbox-list"></div>
   </div>
 
@@ -388,6 +389,7 @@
   <div class="view" id="view-nuevo">
     <h2 class="view-title">Registrar documento</h2>
     <p class="view-sub">Puntos de cuenta, oficios, memorandos, gacetas, resoluciones, decretos, informes, solicitudes, contratos y convenios — todo lo que requiera revisión o firma del Despacho.</p>
+    <div class="telegram-note">Al registrarlo, el documento entra con estado "Recibido" — <strong>todavía no aparece en la Bandeja del Gobernador.</strong> Para que llegue ahí, ve a "Archivo" o al "Tablero" y avánzalo (Recibido → En Revisión → En Despacho).</div>
     <div class="card">
       <form id="form-nuevo">
         <div class="form-grid">
