@@ -30,9 +30,38 @@ const FIREBASE_CONFIG = {
 };
 const FIREBASE_ENABLED = !!FIREBASE_CONFIG.apiKey;
 let firestoreDocRef = null;
-if(FIREBASE_ENABLED && window.firebase){
-  firebase.initializeApp(FIREBASE_CONFIG);
-  firestoreDocRef = firebase.firestore().collection('despacho').doc('estado');
+
+function loadScriptOnce(src){
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok) => { if(settled) return; settled = true; resolve(ok); };
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => finish(true);
+    script.onerror = () => finish(false);
+    document.head.appendChild(script);
+    setTimeout(() => finish(false), 8000);
+  });
+}
+
+async function ensureFirebase(){
+  if(!FIREBASE_ENABLED) return false;
+  if(window.firebase && firebase.firestore){
+    if(!firestoreDocRef) firestoreDocRef = firebase.firestore().collection('despacho').doc('estado');
+    return true;
+  }
+  const okApp = await loadScriptOnce('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+  if(!okApp) return false;
+  const okFs = await loadScriptOnce('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js');
+  if(!okFs) return false;
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    firestoreDocRef = firebase.firestore().collection('despacho').doc('estado');
+    return true;
+  }catch(e){
+    console.error('No se pudo inicializar Firebase', e);
+    return false;
+  }
 }
 
 function updateGuiaPersistenciaText(){
@@ -1426,6 +1455,7 @@ document.getElementById('msg-modal-open-btn').addEventListener('click', () => {
 /* ============ INIT ============ */
 (async function init(){
   document.getElementById('inbox-list').innerHTML = '<div class="loading">Cargando información del Despacho...</div>';
+  await ensureFirebase();
   updateGuiaPersistenciaText();
   await loadData();
   populateSelects();
