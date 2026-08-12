@@ -3,39 +3,79 @@
 Sistema de gestión para el Despacho del Gobernador: correspondencia, dependencias,
 presupuesto, control ciudadano y ayudas sociales.
 
-## Estado del guardado — ya resuelto
+## Cómo funciona de verdad (arquitectura actual)
 
-Este proyecto se construyó y se probó originalmente **dentro del entorno de artifacts
-de Claude.ai**, que le daba al HTML dos capacidades que **no existen en un navegador
-normal ni en un servidor propio**. Ambas fueron auditadas en un navegador real (fuera
-de Claude.ai) y confirmadas rotas; la primera ya se corrigió:
+Es un sitio **100% estático** (HTML + CSS + JS, sin servidor propio) conectado a una
+base de datos en la nube para que los datos se vean iguales en cualquier computadora:
 
-1. **Guardado — corregido.** `window.storage.get/set` (usado en `loadData()` y
-   `persist()` de `js/app.js`) era `undefined` fuera de Claude.ai, así que nada se
-   guardaba nunca — confirmado en auditoría real de navegador (cada llamada a
-   `persist()` lanzaba `TypeError`, silenciado por el `try/catch`). Se reemplazó por
-   `localStorage`: ahora todo se guarda de verdad y sobrevive recargas de página,
-   **siempre que sea en el mismo navegador y la misma computadora** — los datos no
-   se sincronizan entre distintos equipos. Si varias personas van a usar el sistema
-   desde computadoras distintas y necesitan ver los mismos datos, hace falta un
-   backend pequeño (Node/Express + SQLite, por ejemplo) con una base de datos
-   compartida; no está implementado todavía porque implica que alguien lo aloje y lo
-   mantenga corriendo (un VPS o similar), y esa decisión de infraestructura le
-   corresponde a quien vaya a operar el sistema.
+```
+Navegador (cualquier computadora)
+   │
+   ├── index.html + css/styles.css + js/app.js   ← el sitio en sí, servido por GitHub
+   │
+   ├── Cloud Firestore (proyecto "despacho-digital-6999f")
+   │     └── colección "despacho", documento "estado"
+   │         → una sola escritura/lectura en tiempo real (onSnapshot) por cada
+   │           cambio: registrar, editar, responder, etc.
+   │
+   ├── localStorage (del navegador)
+   │     → copia local instantánea: pinta la pantalla sin esperar a la nube,
+   │       y sirve de respaldo si el navegador pierde la conexión.
+   │
+   └── Botones "Descargar datos" / "Cargar datos"
+         → exportar/importar el JSON completo a mano — un respaldo manual,
+           no la forma principal de compartir (eso ya lo hace Firestore solo).
+```
 
-2. **IA del oficio — sigue pendiente, es de esperarse.** `fetch("https://api.anthropic.com/v1/messages")`
-   sin API key (función `generarOficio` en `js/app.js`) — confirmado en la misma
-   auditoría que falla fuera de Claude.ai (sin credenciales) y cae en el `catch`, que
-   por diseño genera una plantilla básica editable en su lugar. Esto es intencional y
-   no rompe nada; el botón "Generar oficio" sigue siendo útil tal cual. Para que
-   redacte con IA real fuera de Claude.ai hace falta un backend propio que reciba la
-   petición del navegador, llame a la API de Anthropic con una API key guardada del
-   lado del servidor (nunca en el navegador) y devuelva el texto — mismo backend que
-   resolvería el punto 1 si se decide construirlo.
+**Lo que esto significa en la práctica:** cualquiera que abra el enlace del sistema
+ve los mismos datos, en vivo, sin que nadie tenga que mandar ni cargar ningún
+archivo. Los botones de descargar/cargar quedan como red de seguridad.
 
-Todo lo demás (generación de PDF con jsPDF, links de Telegram, el login, toda la
-lógica de negocio) es JavaScript normal y funciona igual en cualquier navegador
-moderno — confirmado botón por botón en las 9 secciones del menú.
+### Firebase / Firestore
+
+- Proyecto: `despacho-digital-6999f`, plan gratuito (Spark, sin tarjeta).
+- Configuración (`FIREBASE_CONFIG`) al principio de `js/app.js`. El `apiKey` de un
+  proyecto Firebase **no es secreto** — así lo documenta Google: el control de
+  acceso lo hacen las reglas de seguridad de Firestore, no ocultar ese valor. Por
+  eso está a la vista en el código sin problema.
+- **Reglas de seguridad actuales:** el documento `despacho/estado` está abierto
+  (`allow read, write: if true`), sin pedir usuario de Firebase — coherente con que
+  el sistema ya usa una clave simple (ISAAC/DESPACHOG) en vez de una cuenta real
+  por persona. Si más adelante se necesita que cada quien inicie sesión de verdad
+  (para saber quién cambió qué, o restringir por rol), hay que sumar Firebase
+  Authentication — no está hecho porque agrega bastante complejidad para lo que
+  se necesita hoy.
+- **El SDK de Firebase se carga dinámicamente** desde `js/app.js`
+  (función `ensureFirebase()`), no con una etiqueta `<script src>` fija en el
+  HTML. Esto no es casualidad: algunos servicios que sirven el HTML de forma
+  indirecta (por ejemplo `htmlpreview.github.io`, que lo carga con JavaScript y
+  reescribe la página) **no ejecutan** etiquetas `<script src>` que apunten a
+  dominios externos que no sean el propio repositorio — el script queda mudo, sin
+  ningún error visible. Cargarlo dinámicamente evita ese problema y funciona igual
+  en cualquier forma de hospedaje. La misma técnica ya se usaba para cargar jsPDF
+  (`ensureJsPDF()`) y quedó documentada aquí para que quien toque este código no
+  vuelva a tropezar con lo mismo.
+- Si `FIREBASE_CONFIG.apiKey` quedara vacío, o el SDK no carga por alguna razón,
+  el sistema cae automáticamente a modo solo-local (`localStorage`) sin romperse
+  — es el mismo comportamiento que tenía antes de conectar Firestore.
+
+### Dónde vive el sitio
+
+Ahora mismo se accede vía **htmlpreview.github.io**, que sirve el `index.html` del
+repositorio directamente (sin necesidad de activar nada aparte en GitHub):
+
+```
+https://htmlpreview.github.io/?https://github.com/alejo2202119-bot/DESPACHO-DE-GOBERNACION/blob/claude/whatsapp-telegram-migration-uqv0km/index.html
+```
+
+Es un servicio de terceros pensado para vistas previas rápidas, no para
+producción — funciona, pero con quirks como el de la carga de scripts explicado
+arriba, y una advertencia inofensiva en la consola del navegador por cómo carga
+el CSS dos veces. La alternativa más sólida y profesional, sin cambiar nada del
+código ni de cómo se edita el proyecto, es **GitHub Pages**: sirve exactamente los
+mismos archivos del repositorio, de forma directa (sin reescritura de terceros de
+por medio), con una URL igual de fija, y se actualiza solo con cada `git push` —
+se activa con dos clics en la configuración del repositorio (Settings → Pages).
 
 ## Qué NO debe volver
 
@@ -60,6 +100,12 @@ Están validados en el handler de `form-peticion` en `js/app.js` (busca
 `if(!nombres || !apellidos || !cedula || !correo || !telefono || !direccion...)`).
 Si tocas ese formulario, mantén esa validación — no la relajes sin que te lo pidan.
 
+Estos datos (cédulas, teléfonos, direcciones) son información personal real de
+ciudadanos. Con las reglas de Firestore actuales (abiertas, sin login de Firebase)
+quien tenga el `projectId` puede leerlos o escribirlos — mismo nivel de exposición
+que ya tenía el resto del sistema con su clave de acceso simple. Tenlo en cuenta si
+en algún momento se maneja información más sensible.
+
 ## Estructura del proyecto
 
 ```
@@ -68,7 +114,7 @@ despacho-digital/
 ├── css/
 │   └── styles.css       Todos los estilos (paleta azul/blanco)
 ├── js/
-│   └── app.js            Toda la lógica: estado, render, persistencia, PDF, IA
+│   └── app.js            Estado, render, persistencia (Firestore + localStorage), PDF, IA
 ├── assets/
 │   ├── logo-gobernacion-banner.png   Header + membrete de PDF
 │   ├── logo-amemos-tachira.png       Footer
@@ -115,13 +161,24 @@ mensaje en pantalla antes de abrir Telegram — nunca se abre solo. Hoy en día 
 lugar que usa esto es "Notificar por Telegram" en el detalle de una petición
 ciudadana (`notificarCiudadanoTelegram`).
 
-## Dependencias externas (JS)
+## Generación de oficios con IA — todavía pendiente
 
-- **jsPDF** (`https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js`)
-  se carga dinámicamente solo cuando se pulsa "Descargar PDF" (función
-  `ensureJsPDF()` en `js/app.js`). Requiere internet la primera vez; si falla o tarda
-  más de 8 segundos en responder, avisa con un toast en vez de dejar el botón
-  colgado indefinidamente.
+`generarOficio()` en Control Ciudadano llama directo a
+`fetch("https://api.anthropic.com/v1/messages")` sin API key. Fuera del entorno de
+artifacts de Claude.ai esa llamada siempre falla (sin credenciales), y el `catch`
+genera automáticamente una plantilla básica editable en su lugar — no rompe nada,
+simplemente no usa IA real. Para que sí la use hace falta un backend propio (no
+existe todavía) que reciba la petición del navegador, llame a la API de Anthropic
+con una API key guardada del lado del servidor (nunca en el navegador) y devuelva
+el texto.
+
+## Dependencias externas (JS), ambas cargadas dinámicamente
+
+- **Firebase** (`ensureFirebase()`) — ver sección de Firestore arriba.
+- **jsPDF** (`ensureJsPDF()`, `https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js`)
+  se carga solo cuando se pulsa "Descargar PDF". Requiere internet la primera vez;
+  si falla o tarda más de 8 segundos en responder, avisa con un toast en vez de
+  dejar el botón colgado indefinidamente.
 
 ## Cómo probarlo
 
@@ -133,5 +190,6 @@ python3 -m http.server 8000
 # luego abrir http://localhost:8000 en el navegador
 ```
 
-El guardado (localStorage) funciona igual con doble clic o con servidor; lo que no
-funciona con doble clic (protocolo `file://`) son las rutas relativas de arriba.
+El guardado funciona igual con doble clic o con servidor propio en cuanto a
+Firestore (es una llamada de red normal); lo que **no** funciona con doble clic
+(protocolo `file://`) son las rutas relativas de arriba.

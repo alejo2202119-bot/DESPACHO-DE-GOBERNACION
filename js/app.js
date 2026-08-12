@@ -14,12 +14,12 @@ let expandedDeps = new Set();
 let expandedPeticion = null;
 
 /* ============ SINCRONIZACIÓN COMPARTIDA (Firebase) ============
-   Para que todas las computadoras vean los mismos datos (no solo la que los
-   registró), crea un proyecto gratis en https://console.firebase.google.com
-   (no pide tarjeta), activa "Firestore Database" en modo de prueba, y pega
-   aquí los valores de Configuración del proyecto → tus apps → SDK de Firebase.
-   Mientras apiKey esté vacío, el sistema sigue funcionando exactamente igual
-   que antes: guardado solo en este navegador. */
+   Proyecto: despacho-digital-6999f (console.firebase.google.com). Todas las
+   computadoras que abren el sistema leen/escriben el mismo documento
+   Firestore (colección "despacho", documento "estado") — ver README.md
+   para el detalle completo del funcionamiento y las reglas de seguridad.
+   Si FIREBASE_CONFIG.apiKey queda vacío (o el SDK no carga), el sistema cae
+   automáticamente a guardado solo-local (localStorage) sin romperse. */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCxCTdJsl9aTyZaXP9CnQQm0CDFndUQ-Vg",
   authDomain: "despacho-digital-6999f.firebaseapp.com",
@@ -1408,7 +1408,10 @@ async function cargarRespaldoArchivo(file){
       showToast('Ese archivo no tiene el formato de un respaldo del Despacho Digital.');
       return;
     }
-    if(!confirm('Esto reemplaza todos los datos que ves ahora mismo por los del archivo. ¿Continuar?')) return;
+    const advertencia = (FIREBASE_ENABLED && firestoreDocRef)
+      ? 'Esto reemplaza los datos actuales por los del archivo PARA TODOS — el sistema está conectado a la base de datos compartida, así que cualquiera que tenga el enlace abierto va a ver este cambio también. ¿Continuar?'
+      : 'Esto reemplaza todos los datos que ves ahora mismo por los del archivo. ¿Continuar?';
+    if(!confirm(advertencia)) return;
     STATE = nuevoEstado;
     bindState();
     await persist();
