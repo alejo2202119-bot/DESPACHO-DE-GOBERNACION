@@ -21,12 +21,12 @@ let expandedPeticion = null;
    Mientras apiKey esté vacío, el sistema sigue funcionando exactamente igual
    que antes: guardado solo en este navegador. */
 const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyCxCTdJsl9aTyZaXP9CnQQm0CDFndUQ-Vg",
+  authDomain: "despacho-digital-6999f.firebaseapp.com",
+  projectId: "despacho-digital-6999f",
+  storageBucket: "despacho-digital-6999f.firebasestorage.app",
+  messagingSenderId: "483414657452",
+  appId: "1:483414657452:web:4ad29da5c2a9e8ac805209"
 };
 const FIREBASE_ENABLED = !!FIREBASE_CONFIG.apiKey;
 let firestoreDocRef = null;
