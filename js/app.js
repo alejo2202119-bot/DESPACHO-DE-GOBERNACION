@@ -128,6 +128,43 @@ async function copiarModalMensaje(){
   }
 }
 
+/* ============ FORM MODAL (reemplaza los prompt() del navegador) ============ */
+let formModalResolve = null;
+function abrirFormModal(titulo, campos){
+  return new Promise((resolve) => {
+    formModalResolve = resolve;
+    document.getElementById('form-modal-title').textContent = titulo;
+    document.getElementById('form-modal-fields').innerHTML = campos.map(c => {
+      const tag = c.type === 'textarea'
+        ? '<textarea id="fm-' + c.id + '" placeholder="' + (c.placeholder || '') + '">' + (c.value || '') + '</textarea>'
+        : '<input type="' + (c.type || 'text') + '" id="fm-' + c.id + '"' +
+          (c.placeholder ? ' placeholder="' + c.placeholder + '"' : '') +
+          (c.value !== undefined ? ' value="' + c.value + '"' : '') +
+          (c.min !== undefined ? ' min="' + c.min + '"' : '') +
+          (c.step !== undefined ? ' step="' + c.step + '"' : '') + '>';
+      return '<div class="field"><label>' + c.label + '</label>' + tag + '</div>';
+    }).join('');
+    document.getElementById('form-modal-overlay').classList.add('show');
+    setTimeout(() => {
+      const first = document.getElementById('fm-' + campos[0].id);
+      if(first) first.focus();
+    }, 30);
+  });
+}
+function cerrarFormModal(valores){
+  document.getElementById('form-modal-overlay').classList.remove('show');
+  if(formModalResolve){ formModalResolve(valores); formModalResolve = null; }
+}
+document.getElementById('form-modal-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const valores = {};
+  document.getElementById('form-modal-fields').querySelectorAll('[id^="fm-"]').forEach(inp => {
+    valores[inp.id.slice(3)] = inp.value.trim();
+  });
+  cerrarFormModal(valores);
+});
+document.getElementById('form-modal-cancel-btn').addEventListener('click', () => cerrarFormModal(null));
+
 function fmtDate(d){
   if(!d) return '—';
   const dt = new Date(d + 'T00:00:00');
@@ -136,7 +173,7 @@ function fmtDate(d){
 
 function fmtMoney(n){
   const v = Math.round(n || 0);
-  return '$' + v.toLocaleString('en-US');
+  return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US');
 }
 
 function isOverdue(doc){
@@ -658,11 +695,16 @@ async function guardarContactoDependencia(unitId){
 }
 
 async function registrarContratacion(depId){
-  const descripcion = prompt('Descripción de la contratación:');
-  if(!descripcion) return;
-  const proveedor = prompt('Proveedor:') || 'Por definir';
-  const montoStr = prompt('Monto (USD):');
-  const monto = parseFloat(montoStr);
+  const valores = await abrirFormModal('Registrar contratación', [
+    {id:'descripcion', label:'Descripción', type:'text'},
+    {id:'proveedor', label:'Proveedor', type:'text', placeholder:'Por definir'},
+    {id:'monto', label:'Monto (USD)', type:'number', min:0, step:'0.01'}
+  ]);
+  if(!valores) return;
+  const descripcion = valores.descripcion;
+  const proveedor = valores.proveedor || 'Por definir';
+  const monto = parseFloat(valores.monto);
+  if(!descripcion){ showToast('Falta la descripción de la contratación'); return; }
   if(isNaN(monto) || monto <= 0){ showToast('Monto inválido'); return; }
 
   const dep = DEPENDENCIAS.find(d => d.id === depId);
@@ -686,10 +728,14 @@ async function cambiarEstadoContratacion(depId, contId, nuevoEstado){
 }
 
 async function solicitarPartida(depId){
-  const motivo = prompt('Motivo de la solicitud de partida extraordinaria:');
-  if(!motivo) return;
-  const montoStr = prompt('Monto solicitado (USD):');
-  const monto = parseFloat(montoStr);
+  const valores = await abrirFormModal('Solicitar partida extraordinaria', [
+    {id:'motivo', label:'Motivo de la solicitud', type:'textarea'},
+    {id:'monto', label:'Monto solicitado (USD)', type:'number', min:0, step:'0.01'}
+  ]);
+  if(!valores) return;
+  const motivo = valores.motivo;
+  const monto = parseFloat(valores.monto);
+  if(!motivo){ showToast('Falta el motivo de la solicitud'); return; }
   if(isNaN(monto) || monto <= 0){ showToast('Monto inválido'); return; }
 
   PARTIDAS.push({id: Date.now(), dependenciaId: depId, motivo, montoSolicitado: monto, estado:'pendiente', fechaSolicitud: new Date().toISOString().slice(0,10)});
@@ -1054,8 +1100,12 @@ async function descargarOficioPDF(id){
 async function responderPeticion(id){
   const p = PETICIONES.find(p => p.id === id);
   if(!p) return;
-  const respuesta = prompt('Respuesta dada al ciudadano:');
-  if(!respuesta) return;
+  const valores = await abrirFormModal('Registrar respuesta', [
+    {id:'respuesta', label:'Respuesta dada al ciudadano', type:'textarea'}
+  ]);
+  if(!valores) return;
+  const respuesta = valores.respuesta;
+  if(!respuesta){ showToast('Escribe la respuesta antes de guardar'); return; }
   p.respuesta = respuesta;
   p.estado = 'respondida';
   p.fechaRespuesta = new Date().toISOString().slice(0,10);
@@ -1126,8 +1176,11 @@ async function decidir(id, nuevoEstado, decisionLabel){
 async function derivar(id){
   const doc = DOCS.find(d => d.id === id);
   if(!doc) return;
-  const destino = prompt('¿A qué dirección se deriva este documento?', doc.direccion);
-  if(destino === null) return;
+  const valores = await abrirFormModal('Derivar documento', [
+    {id:'destino', label:'¿A qué dirección se deriva?', type:'text', value: escapeHtml(doc.direccion || '')}
+  ]);
+  if(!valores) return;
+  const destino = valores.destino;
   doc.estado = 'en_revision';
   doc.direccion = destino || doc.direccion;
   doc.historial.push({fecha: new Date().toISOString().slice(0,10), accion: 'Derivado a ' + doc.direccion});
@@ -1212,20 +1265,29 @@ function toggleDetail(id){
 }
 
 /* ============ SELECT POPULATION ============ */
+function fillSelectPreservingValue(id, html){
+  const el = document.getElementById(id);
+  const previo = el.value;
+  el.innerHTML = html;
+  if(previo && el.querySelector('option[value="' + CSS.escape(previo) + '"]')){
+    el.value = previo;
+  }
+}
+
 function populateSelects(){
   const units = getAllUnits();
   const options = units.map(u =>
     '<option value="' + u.id + '">' + escapeHtml(u.isSub ? (u.nombre + ' (' + u.parentNombre + ')') : u.nombre) + '</option>'
   ).join('');
 
-  document.getElementById('ay-dependencia').innerHTML = options;
-  document.getElementById('ayuda-filter-dep').innerHTML = '<option value="">Todas las dependencias</option>' + options;
-  document.getElementById('f-dependencia').innerHTML = '<option value="">Sin asociar</option>' + options;
+  fillSelectPreservingValue('ay-dependencia', options);
+  fillSelectPreservingValue('ayuda-filter-dep', '<option value="">Todas las dependencias</option>' + options);
+  fillSelectPreservingValue('f-dependencia', '<option value="">Sin asociar</option>' + options);
 
   const orgOptions = getAllOrganismos().map(o =>
     '<option value="' + o.id + '">' + escapeHtml(o.nombre) + '</option>'
   ).join('');
-  document.getElementById('pet-organismo').innerHTML = '<option value="">Sin asignar</option>' + orgOptions;
+  fillSelectPreservingValue('pet-organismo', '<option value="">Sin asignar</option>' + orgOptions);
 }
 
 /* ============ RENDER ALL ============ */
