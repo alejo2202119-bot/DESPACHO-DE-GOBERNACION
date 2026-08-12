@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Despacho Digital — Sistema Integral de Gestión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="login-overlay" id="login-overlay">
+  <img class="login-bg-photo" src="assets/login-bg-bernal-evento.jpg" alt="">
+  <div class="login-bg-scrim"></div>
+  <img class="login-portrait login-portrait-chavez" src="assets/login-bg-chavez.jpg" alt="Hugo Chávez">
+  <img class="login-portrait login-portrait-bolivar" src="assets/login-bg-bolivar.jpg" alt="Simón Bolívar">
+  <div class="login-box">
+    <img class="login-logo" src="assets/logo-gobernacion-banner.png" alt="Gobernación del Estado Táchira">
+    <h2>Despacho Digital</h2>
+    <p>Acceso restringido — Gobernación del Estado Táchira</p>
+    <form id="login-form">
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" id="login-user" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" autocomplete="current-password" required>
+      </div>
+      <div class="login-error" id="login-error" style="display:none;">Usuario o contraseña incorrectos.</div>
+      <button type="submit" class="btn primary" style="width:100%;">Ingresar</button>
+    </form>
+  </div>
+</div>
+<div class="app-shell">
+  <nav class="sidebar">
+    <img class="sidebar-logo" id="img-banner-gobernacion" src="assets/logo-gobernacion-banner.png" alt="Gobernación del Estado Táchira">
+    <div class="sidebar-nav">
+      <button class="navitem active" data-view="guia"><span>❓ Guía de Uso</span></button>
+      <button class="navitem" data-view="resumen"><span>📊 Resumen</span><span class="count" id="count-resumen">0</span></button>
+      <button class="navitem" data-view="dependencias"><span>🏛 Dependencias</span><span class="count" id="count-dependencias">0</span></button>
+      <button class="navitem" data-view="ciudadano"><span>👥 Control Ciudadano</span><span class="count" id="count-ciudadano">0</span></button>
+      <button class="navitem" data-view="ayudas"><span>🤝 Ayudas Sociales</span><span class="count" id="count-ayudas">0</span></button>
+      <button class="navitem" data-view="bandeja"><span>📥 Bandeja del Gobernador</span><span class="count" id="count-bandeja">0</span></button>
+      <button class="navitem" data-view="kanban"><span>📋 Tablero</span></button>
+      <button class="navitem" data-view="nuevo"><span>➕ Nueva Entrada</span></button>
+      <button class="navitem" data-view="archivo"><span>🗄 Archivo</span></button>
+    </div>
+    <button class="btn small sidebar-logout" onclick="cerrarSesion()">Cerrar sesión</button>
+  </nav>
+
+  <main class="main-content">
+  <!-- GUIA DE USO -->
+  <div class="view active" id="view-guia">
+    <h2 class="view-title">Guía de uso</h2>
+    <p class="view-sub">Qué es cada sección y qué hace cada botón, explicado sin tecnicismos.</p>
+
+    <div class="guide-intro">
+      <h3>Antes de empezar — 3 cosas que te van a quitar preocupaciones</h3>
+      <ul>
+        <li><strong>Todo se guarda solo, al instante.</strong> No existe un botón de "guardar" que se te pueda olvidar apretar. Cierras esta página y la vuelves a abrir, y todo sigue ahí.</li>
+        <li><strong>Casi todo se puede editar después.</strong> Estados, avances, contactos, textos — nada queda fijo para siempre.</li>
+        <li><strong>Nunca se envía nada solo.</strong> Cuando el sistema arma un mensaje de Telegram, siempre te lo muestra primero en la pantalla para que tú decidas copiarlo o mandarlo. No hay envíos automáticos a tus espaldas.</li>
+      </ul>
+    </div>
+
+    <div class="guide-section">
+      <h4>📊 Resumen</h4>
+      <p class="guide-what"><strong>¿Qué es?</strong> Tu primer vistazo del día. No hay nada que llenar aquí, solo leer.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">Alertas de arriba</span><span class="gb-desc">El sistema revisa solo si algo necesita tu atención: presupuesto por acabarse, meta del trimestre atrasada, documento vencido sin firmar, petición ciudadana sin respuesta hace más de 15 días. Si no hay nada, dice que todo está al día.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Tarjetas de abajo</span><span class="gb-desc">Seis números clave: presupuesto ejecutado, pendientes en la Bandeja del Gobernador, ayudas sociales entregadas, dependencias activas, actividades programadas, peticiones ciudadanas pendientes.</span></div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h4>🏛 Dependencias</h4>
+      <p class="guide-what"><strong>¿Qué es?</strong> Las 5 áreas del Despacho (Consultoría Jurídica, ODACYSS, Gestión Social —con Autoconstrucción adentro—, Observatorio de Frontera, Residencias de Gobernadores), cada una con su presupuesto y su meta del trimestre.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">Ver detalle ▼</span><span class="gb-desc">Despliega la información completa de esa dependencia: contrataciones, subprogramas y el recuadro de contacto.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Guardar avance</span><span class="gb-desc">Actualiza cuánto lleva cumplido esa dependencia de su meta (ej. cuántas ayudas ya entregó de las 100 que tiene como objetivo).</span></div>
+        <div class="guide-btn-row"><span class="gb-name">+ Registrar contratación</span><span class="gb-desc">Anota una compra o contrato que hizo esa dependencia, con proveedor y monto.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Solicitar partida extraordinaria</span><span class="gb-desc">Pide dinero adicional cuando el presupuesto no alcanza. La solicitud aparece con botones "Autorizar" / "Rechazar" para que el Gobernador decida ahí mismo.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Campo de Telegram</span><span class="gb-desc">Ahí guardas el contacto del responsable de esa dependencia en cuanto lo consigas — queda vacío hasta que tú lo llenes.</span></div>
+      </div>
+      <p class="guide-what" style="margin-top:16px;"><strong>Más abajo en esta misma pestaña:</strong> "Otras direcciones y entes de la Gobernación" — para registrar secretarías, institutos o fundaciones que no tienen presupuesto propio en este sistema, pero que necesitas poder elegir al registrar una petición ciudadana.</p>
+    </div>
+
+    <div class="guide-section">
+      <h4>👥 Control Ciudadano</h4>
+      <p class="guide-what"><strong>¿Qué es?</strong> Donde registras lo que pide un ciudadano y le das seguimiento hasta responderle — en físico y en digital a la vez.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">Registrar petición</span><span class="gb-desc">Nombres, apellidos, cédula, correo, teléfono y dirección de habitación del ciudadano son obligatorios — sin esos datos completos no se puede registrar el caso. Le asigna un número de seguimiento solo.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Clic sobre la fila</span><span class="gb-desc">Abre el detalle de esa petición con las siguientes opciones.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Marcar en atención</span><span class="gb-desc">Indica que ya alguien está trabajando en el caso.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Registrar respuesta</span><span class="gb-desc">Escribes qué se hizo o qué se le va a responder al ciudadano.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Notificar por Telegram</span><span class="gb-desc">Abre un mensaje ya redactado con la respuesta, listo para copiar o enviar.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Generar oficio dirigido al Gobernador</span><span class="gb-desc">Convierte el caso en un oficio formal automáticamente — si el ciudadano lo escribió de forma coloquial, lo reorganiza en lenguaje formal. Lo puedes editar en el cuadro de texto.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Enviar a Bandeja del Gobernador</span><span class="gb-desc">Manda ese oficio ya redactado a la Bandeja, para que quede esperando la firma del Gobernador como cualquier otro documento.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Descargar PDF / Copiar oficio</span><span class="gb-desc">Te da el oficio como archivo PDF, o el texto para pegarlo donde lo necesites.</span></div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h4>🤝 Ayudas Sociales</h4>
+      <p class="guide-what"><strong>¿Qué es?</strong> El registro de cada ayuda entregada y de dónde sale el dinero.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">Registrar ayuda</span><span class="gb-desc">Descripción, dependencia, fuente del dinero (presupuesto propio, la Fundación de la Familia Tachirense, Finanzas, o una partida extraordinaria) y monto.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Chips de arriba</span><span class="gb-desc">Cuánto se ha entregado en total por cada fuente de financiamiento.</span></div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h4>📥 Bandeja del Gobernador</h4>
+      <p class="guide-what"><strong>¿Qué es?</strong> Todo lo que está esperando la firma o decisión del Gobernador, ordenado por prioridad y por lo próximo a vencer.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">Aprobar / Rechazar</span><span class="gb-desc">La decisión del Gobernador sobre ese documento.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Derivar</span><span class="gb-desc">Lo manda a otra dirección para que lo revisen antes de decidir.</span></div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h4>📋 Tablero</h4>
+      <p class="guide-what"><strong>¿Qué es?</strong> La misma correspondencia que ves en la Bandeja, pero como columnas de avance: Recibido → En Revisión → En Despacho → Decidido → Archivado.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">Menú de cada tarjeta</span><span class="gb-desc">Cambia el estado de ese documento, moviéndolo de una columna a otra.</span></div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h4>➕ Nueva Entrada</h4>
+      <p class="guide-what"><strong>¿Qué es?</strong> El formulario para registrar cualquier documento que entre al Despacho: punto de cuenta, oficio, memorando, gaceta, resolución, decreto, informe, solicitud, contrato o convenio.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">Registrar documento</span><span class="gb-desc">Le asigna un número de seguimiento solo (por ejemplo DES-2026-0001) y queda visible en la Bandeja y en el Tablero.</span></div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h4>🗄 Archivo</h4>
+      <p class="guide-what"><strong>¿Qué es?</strong> La búsqueda de todo lo que ha pasado por el Despacho, sin importar en qué estado esté.</p>
+      <div class="guide-buttons">
+        <div class="guide-btn-row"><span class="gb-name">Buscador y filtro</span><span class="gb-desc">Escribe cualquier palabra del asunto, remitente o número, y filtra por estado.</span></div>
+        <div class="guide-btn-row"><span class="gb-name">Clic sobre una fila</span><span class="gb-desc">Muestra la trazabilidad completa: quién tocó ese documento y cuándo, desde que entró hasta hoy.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="view" id="view-resumen">
+    <h2 class="view-title">Resumen ejecutivo</h2>
+    <p class="view-sub">Alertas activas e indicadores globales del Despacho.</p>
+    <div class="alert-list" id="alert-list"></div>
+    <div class="stat-cards">
+      <div class="stat-card" id="stat-presupuesto"></div>
+      <div class="stat-card" id="stat-bandeja"></div>
+      <div class="stat-card" id="stat-ayudas"></div>
+      <div class="stat-card" id="stat-dependencias"></div>
+      <div class="stat-card" id="stat-ciudadano"></div>
+    </div>
+  </div>
+
+  <!-- DEPENDENCIAS -->
+  <div class="view" id="view-dependencias">
+    <h2 class="view-title">Dependencias adscritas al Despacho</h2>
+    <p class="view-sub">Presupuesto, metas del Plan Operativo Anual (POA), contrataciones y solicitudes de partida extraordinaria.</p>
+    <div class="dep-grid" id="dep-grid"></div>
+
+    <h2 class="view-title" style="margin-top:32px;">Otras direcciones y entes de la Gobernación</h2>
+    <p class="view-sub">Secretarías, institutos, fundaciones u otros entes que dependen del Despacho pero no llevan seguimiento presupuestario en este sistema — regístralos aquí para poder vincularlos en Control Ciudadano.</p>
+    <div class="org-directory" id="organismos-list"></div>
+    <div class="card">
+      <h2 class="view-title" style="font-size:14px;">Registrar dirección o ente</h2>
+      <form id="form-organismo">
+        <div class="form-grid">
+          <div class="field">
+            <label>Nombre</label>
+            <input type="text" id="org-nombre" required>
+          </div>
+          <div class="field">
+            <label>Tipo</label>
+            <select id="org-tipo">
+              <option>Secretaría</option>
+              <option>Dirección</option>
+              <option>Instituto Autónomo</option>
+              <option>Fundación</option>
+              <option>Empresa del Estado</option>
+              <option>Ente descentralizado</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Responsable</label>
+            <input type="text" id="org-responsable">
+          </div>
+          <div class="field">
+            <label>Telegram (opcional)</label>
+            <input type="text" id="org-telegram" placeholder="@usuario">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Registrar dirección o ente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- AYUDAS SOCIALES -->
+  <div class="view" id="view-ayudas">
+    <h2 class="view-title">Ayudas sociales</h2>
+    <p class="view-sub">Control de ayudas por dependencia y fuente de financiamiento.</p>
+    <div class="ayudas-summary" id="ayudas-summary"></div>
+    <div class="archive-controls">
+      <select id="ayuda-filter-dep"></select>
+      <select id="ayuda-filter-fuente">
+        <option value="">Todas las fuentes</option>
+        <option value="propio">Presupuesto propio</option>
+        <option value="fundacion">Fundación de la Familia Tachirense</option>
+        <option value="finanzas">Dirección de Finanzas</option>
+        <option value="extraordinaria">Partida Extraordinaria</option>
+      </select>
+      <select id="ayuda-filter-estado">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="aprobada">Aprobada</option>
+        <option value="ejecutada">Ejecutada</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
+      <table>
+        <thead><tr><th>Descripción</th><th>Dependencia</th><th>Fuente</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody id="ayudas-body"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2 class="view-title" style="font-size:15px;">Registrar nueva ayuda social</h2>
+      <form id="form-ayuda">
+        <div class="form-grid">
+          <div class="field full">
+            <label>Descripción</label>
+            <input type="text" id="ay-descripcion" placeholder="Ej. Ayuda alimentaria - Sector La Ermita" required>
+          </div>
+          <div class="field">
+            <label>Dependencia</label>
+            <select id="ay-dependencia"></select>
+          </div>
+          <div class="field">
+            <label>Fuente de financiamiento</label>
+            <select id="ay-fuente">
+              <option value="propio">Presupuesto propio de la dependencia</option>
+              <option value="fundacion">Fundación de la Familia Tachirense</option>
+              <option value="finanzas">Dirección de Finanzas</option>
+              <option value="extraordinaria">Partida Extraordinaria</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Monto (USD)</label>
+            <input type="number" id="ay-monto" min="0" step="0.01" required>
+          </div>
+          <div class="field">
+            <label>Estado</label>
+            <select id="ay-estado">
+              <option value="pendiente">Pendiente</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="ejecutada">Ejecutada</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Registrar ayuda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONTROL CIUDADANO -->
+  <div class="view" id="view-ciudadano">
+    <h2 class="view-title">Control ciudadano</h2>
+    <p class="view-sub">Peticiones y oficios ciudadanos recibidos — registro físico y digital, con seguimiento de respuesta.</p>
+    <div class="telegram-note">
+      Cada petición puede generar un oficio dirigido al Dr. Freddy Bernal, redactado y reorganizado con IA a partir del caso — incluso si el ciudadano lo describió de forma coloquial. Esto funciona mientras ves este panel dentro de Claude.ai; si abres el archivo guardado fuera de ahí, el sistema usa automáticamente una plantilla básica editable en su lugar, sin romperse.
+    </div>
+    <div class="ayudas-summary" id="ciudadano-summary"></div>
+    <div class="archive-controls">
+      <input type="text" id="pet-search" placeholder="Buscar por nombre, asunto o número...">
+      <select id="pet-filter-estado">
+        <option value="">Todos los estados</option>
+        <option value="recibida">Recibida</option>
+        <option value="en_atencion">En atención</option>
+        <option value="respondida">Respondida</option>
+        <option value="archivada">Archivada</option>
+      </select>
+      <select id="pet-filter-medio">
+        <option value="">Todos los medios</option>
+        <option value="Físico">Físico</option>
+        <option value="Digital">Digital</option>
+        <option value="Ambos">Ambos</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
+      <table>
+        <thead><tr><th>N° Seguimiento</th><th>Ciudadano</th><th>Asunto</th><th>Medio</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody id="peticiones-body"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2 class="view-title" style="font-size:15px;">Registrar petición ciudadana</h2>
+      <p class="guide-what" style="margin-bottom:16px;">Todos los datos del ciudadano son obligatorios — sin ellos completos no se puede registrar el caso.</p>
+      <form id="form-peticion">
+        <div class="form-grid">
+          <div class="field">
+            <label>Nombres</label>
+            <input type="text" id="pet-nombres" required>
+          </div>
+          <div class="field">
+            <label>Apellidos</label>
+            <input type="text" id="pet-apellidos" required>
+          </div>
+          <div class="field">
+            <label>Cédula</label>
+            <input type="text" id="pet-cedula" placeholder="V-12345678" required>
+          </div>
+          <div class="field">
+            <label>Correo electrónico</label>
+            <input type="email" id="pet-correo" required>
+          </div>
+          <div class="field">
+            <label>Número telefónico</label>
+            <input type="text" id="pet-telefono" placeholder="0414-1234567" required>
+          </div>
+          <div class="field">
+            <label>Dirección de habitación</label>
+            <input type="text" id="pet-direccion" required>
+          </div>
+          <div class="field">
+            <label>Sector / comunidad (opcional)</label>
+            <input type="text" id="pet-sector">
+          </div>
+          <div class="field">
+            <label>Organismo competente</label>
+            <select id="pet-organismo"></select>
+          </div>
+          <div class="field full">
+            <label>Asunto</label>
+            <input type="text" id="pet-asunto" required>
+          </div>
+          <div class="field">
+            <label>Medio de recepción</label>
+            <select id="pet-medio">
+              <option>Físico</option>
+              <option>Digital</option>
+              <option>Ambos</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Registrar petición</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- BANDEJA DEL GOBERNADOR -->
+  <div class="view" id="view-bandeja">
+    <h2 class="view-title">Bandeja del Gobernador</h2>
+    <p class="view-sub">Documentos que requieren su firma o decisión, ordenados por prioridad y vencimiento.</p>
+    <div class="inbox-list" id="inbox-list"></div>
+  </div>
+
+  <!-- TABLERO KANBAN -->
+  <div class="view" id="view-kanban">
+    <h2 class="view-title">Tablero de seguimiento</h2>
+    <p class="view-sub">Estado de cada documento en el flujo de trabajo. Cambia el estado desde el selector de cada tarjeta.</p>
+    <div class="kanban" id="kanban-board"></div>
+  </div>
+
+  <!-- NUEVA ENTRADA -->
+  <div class="view" id="view-nuevo">
+    <h2 class="view-title">Registrar documento</h2>
+    <p class="view-sub">Puntos de cuenta, oficios, memorandos, gacetas, resoluciones, decretos, informes, solicitudes, contratos y convenios — todo lo que requiera revisión o firma del Despacho.</p>
+    <div class="card">
+      <form id="form-nuevo">
+        <div class="form-grid">
+          <div class="field">
+            <label>Remitente / Ente emisor</label>
+            <input type="text" id="f-remitente" placeholder="Secretaría, dirección, instituto, fundación o empresa del Estado" required>
+          </div>
+          <div class="field">
+            <label>Tipo de documento</label>
+            <select id="f-tipo">
+              <option>Punto de Cuenta</option>
+              <option>Oficio</option>
+              <option>Memorando</option>
+              <option>Gaceta</option>
+              <option>Resolución</option>
+              <option>Decreto</option>
+              <option>Comunicación Oficial</option>
+              <option>Informe</option>
+              <option>Solicitud</option>
+              <option>Contrato</option>
+              <option>Convenio</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Asunto</label>
+            <input type="text" id="f-asunto" placeholder="Descripción breve del contenido" required>
+          </div>
+          <div class="field">
+            <label>Dependencia relacionada (opcional)</label>
+            <select id="f-dependencia"></select>
+          </div>
+          <div class="field">
+            <label>Prioridad</label>
+            <select id="f-prioridad">
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="baja">Baja</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fecha límite de respuesta (opcional)</label>
+            <input type="date" id="f-vencimiento">
+          </div>
+          <div class="field">
+            <label>Notas internas (opcional)</label>
+            <input type="text" id="f-notas" placeholder="Contexto adicional">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn" id="btn-limpiar">Limpiar</button>
+          <button type="submit" class="btn primary">Registrar documento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ARCHIVO -->
+  <div class="view" id="view-archivo">
+    <h2 class="view-title">Archivo institucional</h2>
+    <p class="view-sub">Historial completo, buscable por número de seguimiento, remitente o asunto.</p>
+    <div class="archive-controls">
+      <input type="text" id="arch-search" placeholder="Buscar por asunto, remitente o número...">
+      <select id="arch-estado">
+        <option value="">Todos los estados</option>
+        <option value="recibido">Recibido</option>
+        <option value="en_revision">En revisión</option>
+        <option value="en_despacho">En Despacho</option>
+        <option value="decidido">Decidido</option>
+        <option value="archivado">Archivado</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0; overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>N° Seguimiento</th><th>Asunto</th><th>Remitente</th><th>Estado</th><th>Recibido</th></tr>
+        </thead>
+        <tbody id="archive-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="app-footer">
+    <img class="footer-flag" src="assets/flag-stripe.png" alt="">
+    <div class="footer-logos">
+      <img src="assets/logo-amemos-tachira.png" alt="Amemos al Táchira">
+      <img src="assets/logo-bernal-cumple.png" alt="Freddy Bernal Gobernador">
+    </div>
+    <p class="footer-text">Despacho del Gobernador del Estado Táchira — Sistema de Correspondencia Digital</p>
+  </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="msg-modal-overlay">
+  <div class="modal-box">
+    <h3 id="msg-modal-title">Mensaje</h3>
+    <textarea id="msg-modal-text" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="cerrarModalMensaje()">Cerrar</button>
+      <button class="btn" onclick="copiarModalMensaje()">Copiar mensaje</button>
+      <button class="btn primary" id="msg-modal-open-btn">Abrir</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
