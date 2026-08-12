@@ -140,6 +140,7 @@
 
   .progress-row{margin-bottom:14px;}
   .progress-label{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--slate);margin-bottom:4px;font-weight:600;}
+  .progress-detail{font-size:11px;color:var(--slate);margin-top:4px;}
   .progress-track{height:8px;border-radius:5px;background:var(--surface-alt);overflow:hidden;}
   .progress-fill{height:100%;border-radius:5px;}
   .progress-fill.ok{background:var(--ok);}
@@ -170,7 +171,8 @@
   .partida-alert{background:var(--warn-bg);border:1px solid var(--warn);border-radius:8px;padding:11px 13px;margin:12px 0;font-size:12px;color:#6E4C10;}
   .partida-alert .actions{margin-top:9px;display:flex;gap:8px;}
 
-  .avance-row{display:flex;gap:8px;align-items:center;margin:8px 0 4px;}
+  .avance-row{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:8px 0 4px;}
+  .avance-row label{flex-basis:100%;}
   .contacto-edit{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
   .contacto-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
   .contacto-row input{flex:1;min-width:140px;}

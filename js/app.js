@@ -538,12 +538,13 @@ function renderSubprograma(sp){
   let html = '<div class="subprograma">';
   html += '<h4>' + escapeHtml(sp.nombre) + ' — ' + escapeHtml(sp.responsable) + '</h4>';
   html += '<div class="dep-desc" style="margin-bottom:8px;">' + escapeHtml(sp.descripcion) + '</div>';
-  html += '<div class="progress-label"><span>Presupuesto</span><span>' + fmtMoney(ejecutado + comprometido) + ' / ' + fmtMoney(sp.presupuestoAsignado) + '</span></div>';
+  html += '<div class="progress-label"><span>Presupuesto asignado</span><span>' + fmtMoney(sp.presupuestoAsignado) + '</span></div>';
   html += '<div class="progress-track"><div class="progress-fill ' + barClass + '" style="width:' + Math.min(100,pct) + '%"></div></div>';
+  html += '<div class="progress-label"><span>Disponible: ' + fmtMoney(sp.presupuestoAsignado - ejecutado - comprometido) + '</span><span>' + pct.toFixed(0) + '% usado</span></div>';
   if(m){
-    html += '<div class="progress-label" style="margin-top:10px;"><span>' + escapeHtml(m.descripcion) + '</span><span>' + m.cantidadEjecutada + '/' + m.cantidadMeta + '</span></div>';
+    html += '<div class="progress-label" style="margin-top:10px;"><span>Meta de este trimestre: ' + escapeHtml(m.descripcion) + '</span><span>' + m.cantidadEjecutada + ' de ' + m.cantidadMeta + '</span></div>';
     html += '<div class="progress-track"><div class="progress-fill ' + metaBarClass + '" style="width:' + Math.min(100,pctMeta) + '%"></div></div>';
-    html += '<div class="avance-row"><input type="number" id="meta-input-' + sp.id + '" value="' + m.cantidadEjecutada + '" min="0"><button class="btn small" onclick="actualizarAvance(\'' + sp.id + '\')">Guardar avance</button></div>';
+    html += '<div class="avance-row"><label for="meta-input-' + sp.id + '" style="font-size:11.5px;color:var(--slate);">Actualizar cuánto se ha cumplido:</label><input type="number" id="meta-input-' + sp.id + '" value="' + m.cantidadEjecutada + '" min="0"><button class="btn small" onclick="actualizarAvance(\'' + sp.id + '\')">Guardar avance</button></div>';
   }
   html += '<div class="contacto-edit">';
   html += '<strong style="font-size:12px;">Contacto del responsable</strong>';
@@ -580,17 +581,18 @@ function renderDepCard(dep){
   html += '<div class="dep-desc">' + escapeHtml(dep.descripcion) + '</div>';
 
   html += '<div class="progress-row">';
-  html += '<div class="progress-label"><span>Presupuesto</span><span>' + fmtMoney(ejecutado) + ' ejec. + ' + fmtMoney(comprometido) + ' compr. / ' + fmtMoney(dep.presupuestoAsignado) + '</span></div>';
+  html += '<div class="progress-label"><span>Presupuesto asignado</span><span>' + fmtMoney(dep.presupuestoAsignado) + '</span></div>';
   html += '<div class="progress-track"><div class="progress-fill ' + barClass + '" style="width:' + Math.min(100,pctTotal) + '%"></div></div>';
-  html += '<div class="progress-label"><span>Disponible: ' + fmtMoney(disponible) + '</span><span>' + pctTotal.toFixed(0) + '%</span></div>';
+  html += '<div class="progress-label"><span>Disponible: ' + fmtMoney(disponible) + '</span><span>' + pctTotal.toFixed(0) + '% usado</span></div>';
+  html += '<div class="progress-detail">Gastado: ' + fmtMoney(ejecutado) + ' · Reservado (comprometido, aún no gastado): ' + fmtMoney(comprometido) + '</div>';
   html += '</div>';
 
   if(m){
     html += '<div class="progress-row">';
-    html += '<div class="progress-label"><span>Meta POA ' + m.trimestre + '</span><span>' + m.cantidadEjecutada + ' / ' + m.cantidadMeta + '</span></div>';
+    html += '<div class="progress-label"><span>Meta de este trimestre (' + escapeHtml(m.trimestre) + ')</span><span>' + m.cantidadEjecutada + ' de ' + m.cantidadMeta + '</span></div>';
     html += '<div class="progress-track"><div class="progress-fill ' + metaBarClass + '" style="width:' + Math.min(100,pctMeta) + '%"></div></div>';
-    html += '<div class="progress-label"><span>' + escapeHtml(m.descripcion) + '</span><span>Cierre: ' + fmtDate(m.fechaCierre) + '</span></div>';
-    html += '<div class="avance-row"><input type="number" id="meta-input-' + dep.id + '" value="' + m.cantidadEjecutada + '" min="0"><button class="btn small" onclick="actualizarAvance(\'' + dep.id + '\')">Guardar avance</button></div>';
+    html += '<div class="progress-label"><span>' + escapeHtml(m.descripcion) + '</span><span>Vence: ' + fmtDate(m.fechaCierre) + '</span></div>';
+    html += '<div class="avance-row"><label for="meta-input-' + dep.id + '" style="font-size:11.5px;color:var(--slate);">Actualizar cuánto se ha cumplido:</label><input type="number" id="meta-input-' + dep.id + '" value="' + m.cantidadEjecutada + '" min="0"><button class="btn small" onclick="actualizarAvance(\'' + dep.id + '\')">Guardar avance</button></div>';
     html += '</div>';
   }
 
