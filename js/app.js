@@ -13,6 +13,52 @@ let expandedRow = null;
 let expandedDeps = new Set();
 let expandedPeticion = null;
 
+/* ============ SINCRONIZACIÓN COMPARTIDA (Firebase) ============
+   Para que todas las computadoras vean los mismos datos (no solo la que los
+   registró), crea un proyecto gratis en https://console.firebase.google.com
+   (no pide tarjeta), activa "Firestore Database" en modo de prueba, y pega
+   aquí los valores de Configuración del proyecto → tus apps → SDK de Firebase.
+   Mientras apiKey esté vacío, el sistema sigue funcionando exactamente igual
+   que antes: guardado solo en este navegador. */
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+const FIREBASE_ENABLED = !!FIREBASE_CONFIG.apiKey;
+let firestoreDocRef = null;
+if(FIREBASE_ENABLED && window.firebase){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  firestoreDocRef = firebase.firestore().collection('despacho').doc('estado');
+}
+
+function updateGuiaPersistenciaText(){
+  const el = document.getElementById('guia-persistencia');
+  if(!el) return;
+  el.innerHTML = (FIREBASE_ENABLED && firestoreDocRef)
+    ? '<strong>Todo se guarda solo, al instante, y lo ve cualquiera que abra este mismo enlace.</strong> No existe un botón de "guardar" que se te pueda olvidar apretar. Los cambios se sincronizan automáticamente entre todas las computadoras que tengan el sistema abierto.'
+    : '<strong>Todo se guarda solo, al instante.</strong> No existe un botón de "guardar" que se te pueda olvidar apretar. Cierras esta página y la vuelves a abrir, y todo sigue ahí — siempre que sea en este mismo navegador y esta misma computadora.';
+}
+
+function initRealtimeSync(){
+  if(!(FIREBASE_ENABLED && firestoreDocRef)) return;
+  firestoreDocRef.onSnapshot((snap) => {
+    if(!snap.exists) return;
+    const data = snap.data();
+    if(!data || !data.json) return;
+    try{
+      STATE = JSON.parse(data.json);
+      bindState();
+      localStorage.setItem(STORAGE_KEY, data.json);
+      populateSelects();
+      renderAll();
+    }catch(e){ console.error('Error al sincronizar', e); }
+  }, (err) => console.error('Error de sincronización en tiempo real', err));
+}
+
 function bindState(){
   DOCS = STATE.documentos;
   DEPENDENCIAS = STATE.dependencias;
@@ -257,16 +303,26 @@ function seedState(){
 
 /* ============ PERSISTENCE ============ */
 async function loadData(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      STATE = JSON.parse(raw);
-    } else {
+  if(FIREBASE_ENABLED && firestoreDocRef){
+    try{
+      const snap = await firestoreDocRef.get();
+      if(snap.exists && snap.data() && snap.data().json){
+        STATE = JSON.parse(snap.data().json);
+        bindState();
+        return;
+      }
       STATE = seedState();
       bindState();
       await persist();
       return;
+    }catch(e){
+      console.error('No se pudo leer de la base de datos compartida, usando copia local', e);
+      showToast('No se pudo conectar con la base de datos compartida — usando la copia guardada en este navegador.');
     }
+  }
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    STATE = raw ? JSON.parse(raw) : seedState();
   }catch(e){
     STATE = seedState();
   }
@@ -274,11 +330,19 @@ async function loadData(){
 }
 
 async function persist(){
+  const json = JSON.stringify(STATE);
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+    localStorage.setItem(STORAGE_KEY, json);
   }catch(e){
-    console.error('Error al guardar', e);
-    showToast('No se pudo guardar el cambio. Verifica el espacio de almacenamiento del navegador.');
+    console.error('Error al guardar localmente', e);
+  }
+  if(FIREBASE_ENABLED && firestoreDocRef){
+    try{
+      await firestoreDocRef.set({ json: json, actualizado: new Date().toISOString() });
+    }catch(e){
+      console.error('Error al guardar en la base de datos compartida', e);
+      showToast('No se pudo guardar en la base de datos compartida — el cambio quedó solo en este navegador.');
+    }
   }
 }
 
@@ -1312,7 +1376,9 @@ document.getElementById('msg-modal-open-btn').addEventListener('click', () => {
 /* ============ INIT ============ */
 (async function init(){
   document.getElementById('inbox-list').innerHTML = '<div class="loading">Cargando información del Despacho...</div>';
+  updateGuiaPersistenciaText();
   await loadData();
   populateSelects();
   renderAll();
+  initRealtimeSync();
 })();
