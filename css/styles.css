@@ -49,9 +49,9 @@
     background-size:min(70vw, 980px) auto;
     background-repeat:no-repeat;
     background-position:center;
-    opacity:0.14;
-    -webkit-mask-image:radial-gradient(ellipse 55% 55% at center, #000 35%, transparent 78%);
-    mask-image:radial-gradient(ellipse 55% 55% at center, #000 35%, transparent 78%);
+    opacity:0.32;
+    -webkit-mask-image:radial-gradient(ellipse 60% 60% at center, #000 60%, transparent 95%);
+    mask-image:radial-gradient(ellipse 60% 60% at center, #000 60%, transparent 95%);
     pointer-events:none;
     z-index:0;
   }
