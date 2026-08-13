@@ -220,7 +220,8 @@
     <h2 class="view-title">Ayudas sociales</h2>
     <p class="view-sub">Control de ayudas por dependencia y fuente de financiamiento.</p>
     <div class="ayudas-summary" id="ayudas-summary"></div>
-    <div class="card">
+    <button type="button" class="btn registro-toggle" id="ayudas-registro-btn" onclick="toggleRegistro('ayudas-registro', 'ayudas-registro-btn', 'ayudas sociales')">Ver registro de ayudas sociales ▾</button>
+    <div class="card card-compact">
       <h2 class="view-title" style="font-size:15px;">Registrar nueva ayuda social</h2>
       <form id="form-ayuda">
         <div class="form-grid">
@@ -259,7 +260,6 @@
         </div>
       </form>
     </div>
-    <button type="button" class="btn registro-toggle" id="ayudas-registro-btn" onclick="toggleRegistro('ayudas-registro', 'ayudas-registro-btn', 'ayudas sociales')">Ver registro de ayudas sociales ▾</button>
     <div class="registro-panel" id="ayudas-registro" style="display:none;">
       <div class="archive-controls">
         <input type="text" id="ayuda-search" placeholder="Buscar por descripción...">
@@ -298,9 +298,10 @@
       Cada petición puede generar un oficio dirigido al Dr. Freddy Bernal, redactado y reorganizado con IA a partir del caso — incluso si el ciudadano lo describió de forma coloquial. Esto funciona mientras ves este panel dentro de Claude.ai; si abres el archivo guardado fuera de ahí, el sistema usa automáticamente una plantilla básica editable en su lugar, sin romperse.
     </div>
     <div class="ayudas-summary" id="ciudadano-summary"></div>
-    <div class="card">
+    <button type="button" class="btn registro-toggle" id="ciudadano-registro-btn" onclick="toggleRegistro('ciudadano-registro', 'ciudadano-registro-btn', 'peticiones ciudadanas')">Ver registro de peticiones ▾</button>
+    <div class="card card-compact">
       <h2 class="view-title" style="font-size:15px;">Registrar petición ciudadana</h2>
-      <p class="guide-what" style="margin-bottom:16px;">Todos los datos del ciudadano son obligatorios — sin ellos completos no se puede registrar el caso.</p>
+      <p class="guide-what" style="margin-bottom:12px;">Todos los datos del ciudadano son obligatorios — sin ellos completos no se puede registrar el caso.</p>
       <form id="form-peticion">
         <div class="form-grid">
           <div class="field">
@@ -353,7 +354,6 @@
         </div>
       </form>
     </div>
-    <button type="button" class="btn registro-toggle" id="ciudadano-registro-btn" onclick="toggleRegistro('ciudadano-registro', 'ciudadano-registro-btn', 'peticiones ciudadanas')">Ver registro de peticiones ▾</button>
     <div class="registro-panel" id="ciudadano-registro" style="display:none;">
       <div class="archive-controls">
         <input type="text" id="pet-search" placeholder="Buscar por nombre, asunto o número...">
