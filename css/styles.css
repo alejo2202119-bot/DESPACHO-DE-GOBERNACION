@@ -423,40 +423,59 @@
   /* LOGIN */
   .login-overlay{
     position:fixed;inset:0;z-index:1000;
-    display:flex;align-items:center;justify-content:center;padding:24px;
+    display:flex;align-items:center;justify-content:center;padding:20px;
     overflow-y:auto;
     background:
-      radial-gradient(900px 600px at 50% -10%, rgba(255,199,44,0.14), transparent 60%),
-      radial-gradient(900px 700px at 50% 110%, rgba(208,17,43,0.12), transparent 60%),
-      var(--navy-deep);
+      radial-gradient(1000px 620px at 50% -15%, rgba(255,199,44,0.09), transparent 60%),
+      radial-gradient(900px 620px at 50% 115%, rgba(208,17,43,0.07), transparent 60%),
+      linear-gradient(165deg, #1E3A66 0%, #10233F 100%);
   }
   /* La foto se muestra completa (sin recortar) como una tarjeta arriba del formulario,
      en vez de fondo a pantalla completa — así siempre se ven las tres personas enteras,
-     sin importar el tamaño ni la forma de la pantalla. */
+     sin importar el tamaño ni la forma de la pantalla. El tamaño se achica en pantallas
+     bajas (media queries más abajo) para que el formulario nunca quede fuera de vista. */
   .login-stack{
-    width:100%;max-width:410px;
-    border-radius:20px;overflow:hidden;
-    box-shadow:0 22px 60px rgba(3,15,32,0.5);
+    width:100%;max-width:380px;
+    border-radius:18px;overflow:hidden;
+    box-shadow:0 22px 55px rgba(3,15,32,0.45);
+    border:1px solid rgba(255,199,44,0.35);
     display:flex;flex-direction:column;
     margin:auto;
   }
-  .login-photo-frame{position:relative;width:100%;line-height:0;}
-  .login-bg-photo{display:block;width:100%;height:auto;filter:saturate(1.05);}
+  .login-photo-frame{position:relative;width:100%;line-height:0;background:#1a2c4a;}
+  .login-bg-photo{display:block;width:100%;height:auto;filter:saturate(1.08) contrast(1.03);}
   .login-photo-fade{
     position:absolute;inset:0;
-    background:linear-gradient(to bottom, rgba(10,26,50,0) 58%, rgba(10,26,50,0.96) 100%);
+    background:
+      linear-gradient(to bottom, rgba(10,26,50,0) 55%, rgba(10,26,50,0.97) 100%),
+      linear-gradient(to right, rgba(10,26,50,0.22) 0%, transparent 15%, transparent 85%, rgba(10,26,50,0.22) 100%);
   }
   .login-box{
     position:relative;z-index:3;
-    background:var(--surface);padding:28px 30px 32px;width:100%;
+    background:var(--surface);padding:20px 26px 24px;width:100%;
     text-align:center;
-    border-top:5px solid var(--gold);
+    border-top:4px solid var(--gold);
   }
-  .login-logo{height:64px;width:auto;margin-bottom:14px;border-radius:6px;}
-  .login-box h2{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-0.01em;margin:0 0 4px;color:var(--navy-deep);font-size:20px;}
-  .login-box p{margin:0 0 22px;color:var(--slate);font-size:12.5px;}
-  .login-box .field{text-align:left;margin-bottom:14px;}
-  .login-error{color:var(--danger);font-size:12px;margin:-4px 0 12px;text-align:left;}
+  .login-logo{height:52px;width:auto;margin-bottom:10px;border-radius:6px;}
+  .login-box h2{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-0.01em;margin:0 0 3px;color:var(--navy-deep);font-size:18px;}
+  .login-box p{margin:0 0 16px;color:var(--slate);font-size:12px;}
+  .login-box .field{text-align:left;margin-bottom:11px;}
+  .login-error{color:var(--danger);font-size:12px;margin:-4px 0 10px;text-align:left;}
+
+  /* En pantallas bajas, la tarjeta se achica más (la foto conserva su proporción, sin
+     recortarse) para que el usuario nunca tenga que hacer scroll para ver la contraseña. */
+  @media (max-height:760px){
+    .login-stack{max-width:320px;}
+    .login-logo{height:44px;margin-bottom:8px;}
+    .login-box{padding:16px 22px 20px;}
+    .login-box h2{font-size:16.5px;}
+    .login-box p{margin-bottom:12px;}
+    .login-box .field{margin-bottom:9px;}
+  }
+  @media (max-height:620px){
+    .login-stack{max-width:260px;}
+    .login-box{padding:12px 18px 16px;}
+  }
 
   /* MESSAGE MODAL */
   .modal-overlay{
