@@ -171,6 +171,64 @@ function fmtDate(d){
   return dt.toLocaleDateString('es-VE', {day:'2-digit', month:'short', year:'numeric'});
 }
 
+// Parsea fechas guardadas en cualquiera de los dos formatos que usa el sistema:
+// "YYYY-MM-DD" (solo fecha, ej. vencimientos elegidos por el usuario) o
+// timestamp ISO completo con hora (ej. momento exacto de un registro).
+function parseFecha(d){
+  if(!d) return null;
+  return d.includes('T') ? new Date(d) : new Date(d + 'T00:00:00');
+}
+
+// Fecha y hora exacta de un registro (petición, ayuda, documento, etc.)
+function fmtDateTime(d){
+  if(!d) return '—';
+  const dt = parseFecha(d);
+  if(!dt || isNaN(dt.getTime())) return '—';
+  const fecha = dt.toLocaleDateString('es-VE', {day:'2-digit', month:'short', year:'numeric'});
+  const hora = dt.toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'});
+  return fecha + ', ' + hora;
+}
+
+// Timestamp completo (fecha + hora exacta) para guardar el momento de un registro
+function ahoraISO(){
+  return new Date().toISOString();
+}
+
+/* ============ FILTROS POR FECHA / AÑO (reutilizables en varias vistas) ============ */
+function anioDeFecha(f){
+  const dt = parseFecha(f);
+  return dt && !isNaN(dt.getTime()) ? dt.getFullYear() : null;
+}
+
+// Rellena un <select> con los años presentes en una lista de registros, sin perder la selección actual
+function poblarSelectAnios(select, items, getFecha){
+  if(!select) return;
+  const anios = Array.from(new Set(items.map(getFecha).map(anioDeFecha).filter(Boolean))).sort((a,b) => b - a);
+  const actual = select.value;
+  select.innerHTML = '<option value="">Todos los años</option>' + anios.map(a => '<option value="' + a + '">' + a + '</option>').join('');
+  if(actual && anios.includes(Number(actual))) select.value = actual;
+}
+
+// true si la fecha de un registro cae dentro del rango/año elegido en los filtros
+function coincideFiltroFecha(fechaStr, desde, hasta, anio){
+  const dt = parseFecha(fechaStr);
+  if(!dt || isNaN(dt.getTime())) return true;
+  if(anio && dt.getFullYear() !== Number(anio)) return false;
+  if(desde && dt < new Date(desde + 'T00:00:00')) return false;
+  if(hasta && dt > new Date(hasta + 'T23:59:59')) return false;
+  return true;
+}
+
+// Muestra u oculta el panel de registro/listado que queda debajo de un formulario
+function toggleRegistro(panelId, btnId, etiqueta){
+  const panel = document.getElementById(panelId);
+  const btn = document.getElementById(btnId);
+  if(!panel || !btn) return;
+  const abierto = panel.style.display !== 'none';
+  panel.style.display = abierto ? 'none' : 'block';
+  btn.textContent = abierto ? ('Ver registro de ' + etiqueta + ' ▾') : ('Ocultar registro de ' + etiqueta + ' ▴');
+}
+
 function fmtMoney(n){
   const v = Math.round(n || 0);
   return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US');
@@ -464,7 +522,7 @@ function computeAlerts(){
   });
 
   PETICIONES.filter(p => p.estado === 'recibida' || p.estado === 'en_atencion').forEach(p => {
-    const dias = Math.floor((today - new Date(p.fecha + 'T00:00:00')) / (1000*60*60*24));
+    const dias = Math.floor((today - parseFecha(p.fecha)) / (1000*60*60*24));
     if(dias >= 15){
       alerts.push({severidad:'alta', texto:'Petición ciudadana sin respuesta hace ' + dias + ' días: ' + p.tracking + ' — ' + nombreCompletoPeticion(p) + '.'});
     }
@@ -712,7 +770,7 @@ async function registrarContratacion(depId){
   const dep = DEPENDENCIAS.find(d => d.id === depId);
   if(!dep) return;
   if(!dep.contrataciones) dep.contrataciones = [];
-  dep.contrataciones.push({id: Date.now(), descripcion, proveedor, monto, estado:'en_proceso'});
+  dep.contrataciones.push({id: Date.now(), descripcion, proveedor, monto, estado:'en_proceso', fecha: ahoraISO()});
   await persist();
   renderAll();
   showToast('Contratación registrada');
@@ -740,7 +798,7 @@ async function solicitarPartida(depId){
   if(!motivo){ showToast('Falta el motivo de la solicitud'); return; }
   if(isNaN(monto) || monto <= 0){ showToast('Monto inválido'); return; }
 
-  PARTIDAS.push({id: Date.now(), dependenciaId: depId, motivo, montoSolicitado: monto, estado:'pendiente', fechaSolicitud: new Date().toISOString().slice(0,10)});
+  PARTIDAS.push({id: Date.now(), dependenciaId: depId, motivo, montoSolicitado: monto, estado:'pendiente', fechaSolicitud: ahoraISO()});
   await persist();
   renderAll();
   showToast('Solicitud registrada, pendiente de autorización del Gobernador');
@@ -767,11 +825,18 @@ function renderAyudas(){
   const filterDep = document.getElementById('ayuda-filter-dep').value;
   const filterFuente = document.getElementById('ayuda-filter-fuente').value;
   const filterEstado = document.getElementById('ayuda-filter-estado').value;
+  const search = document.getElementById('ayuda-search').value.toLowerCase();
+  const filterAnio = document.getElementById('ayuda-filter-anio').value;
+  const fechaDesde = document.getElementById('ayuda-fecha-desde').value;
+  const fechaHasta = document.getElementById('ayuda-fecha-hasta').value;
+  poblarSelectAnios(document.getElementById('ayuda-filter-anio'), AYUDAS, a => a.fecha);
 
   let filtered = AYUDAS.filter(a =>
     (!filterDep || a.dependenciaId === filterDep) &&
     (!filterFuente || a.fuente === filterFuente) &&
-    (!filterEstado || a.estado === filterEstado)
+    (!filterEstado || a.estado === filterEstado) &&
+    (!search || a.descripcion.toLowerCase().includes(search)) &&
+    coincideFiltroFecha(a.fecha, fechaDesde, fechaHasta, filterAnio)
   );
   filtered.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
 
@@ -792,7 +857,7 @@ function renderAyudas(){
     '<td>' + FUENTE_LABELS[a.fuente] + '</td>' +
     '<td>' + fmtMoney(a.monto) + '</td>' +
     '<td><span class="estado-pill estado-' + a.estado + '">' + AYUDA_ESTADO_LABELS[a.estado] + '</span></td>' +
-    '<td>' + fmtDate(a.fecha) + '</td></tr>'
+    '<td>' + fmtDateTime(a.fecha) + '</td></tr>'
   ).join('');
 }
 
@@ -815,11 +880,16 @@ function renderControlCiudadano(){
   const search = document.getElementById('pet-search').value.toLowerCase();
   const filterEstado = document.getElementById('pet-filter-estado').value;
   const filterMedio = document.getElementById('pet-filter-medio').value;
+  const filterAnio = document.getElementById('pet-filter-anio').value;
+  const fechaDesde = document.getElementById('pet-fecha-desde').value;
+  const fechaHasta = document.getElementById('pet-fecha-hasta').value;
+  poblarSelectAnios(document.getElementById('pet-filter-anio'), PETICIONES, p => p.fecha);
 
   let filtered = PETICIONES.filter(p =>
     (!filterEstado || p.estado === filterEstado) &&
     (!filterMedio || p.medioRecepcion === filterMedio) &&
-    (!search || nombreCompletoPeticion(p).toLowerCase().includes(search) || p.asunto.toLowerCase().includes(search) || p.tracking.toLowerCase().includes(search) || (p.cedula||'').toLowerCase().includes(search))
+    (!search || nombreCompletoPeticion(p).toLowerCase().includes(search) || p.asunto.toLowerCase().includes(search) || p.tracking.toLowerCase().includes(search) || (p.cedula||'').toLowerCase().includes(search)) &&
+    coincideFiltroFecha(p.fecha, fechaDesde, fechaHasta, filterAnio)
   );
   filtered.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
 
@@ -844,7 +914,7 @@ function renderControlCiudadano(){
       '<td>' + escapeHtml(p.asunto) + '</td>' +
       '<td>' + escapeHtml(p.medioRecepcion) + '</td>' +
       '<td><span class="estado-pill estado-pet-' + p.estado + '">' + PETICION_ESTADO_LABELS[p.estado] + '</span></td>' +
-      '<td>' + fmtDate(p.fecha) + '</td></tr>';
+      '<td>' + fmtDateTime(p.fecha) + '</td></tr>';
 
     if(expandedPeticion === p.id){
       rows += '<tr class="detail-row"><td colspan="6">';
@@ -857,7 +927,7 @@ function renderControlCiudadano(){
       rows += '<strong>Organismo:</strong> ' + escapeHtml(p.organismoId ? nombreUnidad(p.organismoId) : 'Sin asignar');
       rows += '</div>';
       if(p.respuesta){
-        rows += '<div style="font-size:12px;margin-bottom:8px;"><strong>Respuesta (' + fmtDate(p.fechaRespuesta) + '):</strong> ' + escapeHtml(p.respuesta) + '</div>';
+        rows += '<div style="font-size:12px;margin-bottom:8px;"><strong>Respuesta (' + fmtDateTime(p.fechaRespuesta) + '):</strong> ' + escapeHtml(p.respuesta) + '</div>';
       }
       rows += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
       if(p.estado === 'recibida'){
@@ -876,7 +946,7 @@ function renderControlCiudadano(){
 
       rows += '<div class="oficio-box">';
       if(p.oficioGenerado){
-        rows += '<div class="oficio-label">Oficio dirigido al Gobernador — ' + (p.oficioFuente === 'ia' ? 'redactado con IA' : 'plantilla básica, edítalo antes de enviar') + ' · ' + fmtDate(p.oficioFecha) + '</div>';
+        rows += '<div class="oficio-label">Oficio dirigido al Gobernador — ' + (p.oficioFuente === 'ia' ? 'redactado con IA' : 'generado automáticamente, revísalo antes de enviar') + ' · ' + fmtDateTime(p.oficioFecha) + '</div>';
         rows += '<textarea id="oficio-text-' + p.id + '" class="oficio-textarea">' + escapeHtml(p.oficioGenerado) + '</textarea>';
         rows += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">';
         rows += '<button class="btn small" onclick="copiarOficio(' + p.id + ')">Copiar oficio</button>';
@@ -899,17 +969,47 @@ function renderControlCiudadano(){
   }).join('');
 }
 
+// Limpia texto escrito de forma coloquial/desordenada: espacios, mayúscula inicial, punto final.
+// No reescribe el contenido ni inventa datos — solo prolijidad básica de forma.
+function limpiarTextoCiudadano(t){
+  if(!t) return '';
+  let s = t.trim().replace(/\s+/g, ' ');
+  if(!s) return '';
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  if(!/[.!?…]$/.test(s)) s += '.';
+  return s;
+}
+
 function oficioTemplateFallback(p){
-  return 'Ciudadano(a) Gobernador\n' +
+  const organismo = ORGANISMOS.find(o => o.id === p.organismoId);
+  const asuntoLimpio = limpiarTextoCiudadano(p.asunto);
+  const contacto = [p.telefono, p.correo].filter(Boolean).join(' / ');
+
+  let texto = 'Ciudadano\n' +
     'Dr. Freddy Bernal\n' +
     'Gobernador del Estado Táchira\n' +
     'Su Despacho.-\n\n' +
-    'Me dirijo a usted en la oportunidad de someter a su consideración el caso planteado por el/la ciudadano(a) ' + nombreCompletoPeticion(p) + ', titular de la cédula de identidad ' + (p.cedula || 'no especificada') +
-    (p.sector ? (', del sector ' + p.sector) : '') + ', quien mediante petición N° ' + p.tracking + ', recibida en fecha ' +
-    fmtDate(p.fecha) + ' por vía ' + p.medioRecepcion.toLowerCase() + ', expone lo siguiente:\n\n' +
-    '"' + p.asunto + '"\n\n' +
-    'Se eleva el presente caso a su digno Despacho para los fines pertinentes y las instrucciones que a bien tenga impartir.\n\n' +
-    'Sin otro particular,';
+    'Me dirijo a usted en la oportunidad de someter a su consideración el caso planteado por el/la ciudadano(a) ' +
+    nombreCompletoPeticion(p) + ', titular de la cédula de identidad ' + (p.cedula || 'no especificada') +
+    (p.sector ? (', residente en el sector ' + p.sector) : (p.direccion ? (', domiciliado(a) en ' + p.direccion) : '')) +
+    ', quien mediante petición N° ' + p.tracking + ', recibida en fecha ' + fmtDate(p.fecha) +
+    ' por vía ' + p.medioRecepcion.toLowerCase() + ', expone lo siguiente:\n\n' +
+    '"' + asuntoLimpio + '"\n\n';
+
+  if(organismo){
+    texto += 'En atención a la naturaleza del caso, el mismo ha sido referido a ' + organismo.nombre +
+      ' como organismo competente, a fin de que se le brinde el seguimiento correspondiente.\n\n';
+  }
+
+  texto += 'Se eleva el presente caso a su digno Despacho para los fines pertinentes y las instrucciones que a bien tenga impartir.';
+
+  if(contacto){
+    texto += ' Para efectos de seguimiento, el/la ciudadano(a) puede ser contactado(a) a través de: ' + contacto + '.';
+  }
+
+  texto += '\n\nSin otro particular a que hacer referencia, y en espera de su valiosa atención, quedo de usted.';
+
+  return texto;
 }
 
 async function generarOficio(id){
@@ -949,7 +1049,7 @@ async function generarOficio(id){
 
     p.oficioGenerado = texto;
     p.oficioFuente = 'ia';
-    p.oficioFecha = new Date().toISOString().slice(0,10);
+    p.oficioFecha = ahoraISO();
     await persist();
     renderAll();
     showToast('Oficio redactado con IA');
@@ -957,10 +1057,10 @@ async function generarOficio(id){
     console.error('No se pudo generar el oficio con IA:', e);
     p.oficioGenerado = oficioTemplateFallback(p);
     p.oficioFuente = 'plantilla';
-    p.oficioFecha = new Date().toISOString().slice(0,10);
+    p.oficioFecha = ahoraISO();
     await persist();
     renderAll();
-    showToast('El asistente de IA no está disponible aquí — se generó una plantilla básica, edítala antes de enviar.');
+    showToast('El asistente de IA no está disponible aquí — se generó el oficio automáticamente, revísalo antes de enviar.');
   }
 }
 
@@ -1001,8 +1101,8 @@ async function enviarOficioABandeja(id){
     vencimiento: null,
     notas: texto,
     estado: 'en_despacho',
-    recibido: new Date().toISOString().slice(0,10),
-    historial: [{fecha: new Date().toISOString().slice(0,10), accion: 'Oficio generado a partir de la petición ' + p.tracking + ' y enviado a la Bandeja del Gobernador'}]
+    recibido: ahoraISO(),
+    historial: [{fecha: ahoraISO(), accion: 'Oficio generado a partir de la petición ' + p.tracking + ' y enviado a la Bandeja del Gobernador'}]
   };
   DOCS.unshift(doc);
   p.oficioEnviadoTracking = doc.tracking;
@@ -1110,7 +1210,7 @@ async function responderPeticion(id){
   if(!respuesta){ showToast('Escribe la respuesta antes de guardar'); return; }
   p.respuesta = respuesta;
   p.estado = 'respondida';
-  p.fechaRespuesta = new Date().toISOString().slice(0,10);
+  p.fechaRespuesta = ahoraISO();
   await persist();
   renderAll();
   showToast('Respuesta registrada');
@@ -1150,7 +1250,7 @@ function renderBandeja(){
       '<div class="stamp">' + d.tracking + '</div>' +
       '<div class="inbox-main">' +
         '<div class="asunto">' + escapeHtml(d.asunto) + '</div>' +
-        '<div class="meta">' + escapeHtml(d.remitente) + ' · ' + escapeHtml(d.tipo) + depTag + ' · recibido ' + fmtDate(d.recibido) + '</div>' +
+        '<div class="meta">' + escapeHtml(d.remitente) + ' · ' + escapeHtml(d.tipo) + depTag + ' · recibido ' + fmtDateTime(d.recibido) + '</div>' +
         '<div class="inbox-actions">' +
           '<button class="btn primary" onclick="decidir(' + d.id + ', \'decidido\', \'Aprobado\')">Aprobar</button>' +
           '<button class="btn reject" onclick="decidir(' + d.id + ', \'decidido\', \'Rechazado\')">Rechazar</button>' +
@@ -1169,7 +1269,7 @@ async function decidir(id, nuevoEstado, decisionLabel){
   const doc = DOCS.find(d => d.id === id);
   if(!doc) return;
   doc.estado = nuevoEstado;
-  doc.historial.push({fecha: new Date().toISOString().slice(0,10), accion: decisionLabel + ' por el Gobernador'});
+  doc.historial.push({fecha: ahoraISO(), accion: decisionLabel + ' por el Gobernador'});
   await persist();
   renderAll();
   showToast(decisionLabel + ': ' + doc.tracking);
@@ -1185,7 +1285,7 @@ async function derivar(id){
   const destino = valores.destino;
   doc.estado = 'en_revision';
   doc.direccion = destino || doc.direccion;
-  doc.historial.push({fecha: new Date().toISOString().slice(0,10), accion: 'Derivado a ' + doc.direccion});
+  doc.historial.push({fecha: ahoraISO(), accion: 'Derivado a ' + doc.direccion});
   await persist();
   renderAll();
   showToast('Derivado a ' + doc.direccion);
@@ -1213,7 +1313,7 @@ async function cambiarEstado(id, nuevoEstado){
   const doc = DOCS.find(d => d.id === id);
   if(!doc) return;
   doc.estado = nuevoEstado;
-  doc.historial.push({fecha: new Date().toISOString().slice(0,10), accion: 'Movido a: ' + ESTADO_LABELS[nuevoEstado]});
+  doc.historial.push({fecha: ahoraISO(), accion: 'Movido a: ' + ESTADO_LABELS[nuevoEstado]});
   await persist();
   renderAll();
   showToast(doc.tracking + ' → ' + ESTADO_LABELS[nuevoEstado]);
@@ -1243,12 +1343,12 @@ function renderArchivo(){
       '<td>' + escapeHtml(d.asunto) + '</td>' +
       '<td>' + escapeHtml(d.remitente) + '</td>' +
       '<td><span class="estado-pill estado-' + d.estado + '">' + ESTADO_LABELS[d.estado] + '</span></td>' +
-      '<td>' + fmtDate(d.recibido) + '</td></tr>';
+      '<td>' + fmtDateTime(d.recibido) + '</td></tr>';
 
     if(expandedRow === d.id){
       rows += '<tr class="detail-row"><td colspan="5">' +
         '<strong style="font-size:12.5px;">Historial de trazabilidad</strong>' +
-        '<ul class="hist">' + d.historial.map(h => '<li>' + fmtDate(h.fecha) + ' — ' + escapeHtml(h.accion) + '</li>').join('') + '</ul>';
+        '<ul class="hist">' + d.historial.map(h => '<li>' + fmtDateTime(h.fecha) + ' — ' + escapeHtml(h.accion) + '</li>').join('') + '</ul>';
       if(d.dependenciaId){
         rows += '<div style="margin-top:8px;font-size:12px;color:var(--slate);"><strong>Dependencia relacionada:</strong> ' + escapeHtml(nombreUnidad(d.dependenciaId)) + '</div>';
       }
@@ -1343,8 +1443,8 @@ document.getElementById('form-nuevo').addEventListener('submit', async (e) => {
     vencimiento: document.getElementById('f-vencimiento').value || null,
     notas: document.getElementById('f-notas').value.trim(),
     estado: 'recibido',
-    recibido: new Date().toISOString().slice(0,10),
-    historial: [{fecha: new Date().toISOString().slice(0,10), accion: 'Documento recibido y digitalizado'}]
+    recibido: ahoraISO(),
+    historial: [{fecha: ahoraISO(), accion: 'Documento recibido y digitalizado'}]
   };
   DOCS.unshift(doc);
   await persist();
@@ -1372,7 +1472,7 @@ document.getElementById('form-ayuda').addEventListener('submit', async (e) => {
     fuente: document.getElementById('ay-fuente').value,
     monto: monto,
     estado: document.getElementById('ay-estado').value,
-    fecha: new Date().toISOString().slice(0,10)
+    fecha: ahoraISO()
   };
   AYUDAS.unshift(ayuda);
   await persist();
@@ -1431,7 +1531,7 @@ document.getElementById('form-peticion').addEventListener('submit', async (e) =>
     organismoId: document.getElementById('pet-organismo').value || null,
     asunto: asunto,
     medioRecepcion: document.getElementById('pet-medio').value,
-    fecha: new Date().toISOString().slice(0,10),
+    fecha: ahoraISO(),
     estado: 'recibida',
     respuesta: '',
     fechaRespuesta: null
@@ -1448,9 +1548,16 @@ document.getElementById('arch-estado').addEventListener('change', renderArchivo)
 document.getElementById('ayuda-filter-dep').addEventListener('change', renderAyudas);
 document.getElementById('ayuda-filter-fuente').addEventListener('change', renderAyudas);
 document.getElementById('ayuda-filter-estado').addEventListener('change', renderAyudas);
+document.getElementById('ayuda-search').addEventListener('input', renderAyudas);
+document.getElementById('ayuda-filter-anio').addEventListener('change', renderAyudas);
+document.getElementById('ayuda-fecha-desde').addEventListener('change', renderAyudas);
+document.getElementById('ayuda-fecha-hasta').addEventListener('change', renderAyudas);
 document.getElementById('pet-search').addEventListener('input', renderControlCiudadano);
 document.getElementById('pet-filter-estado').addEventListener('change', renderControlCiudadano);
 document.getElementById('pet-filter-medio').addEventListener('change', renderControlCiudadano);
+document.getElementById('pet-filter-anio').addEventListener('change', renderControlCiudadano);
+document.getElementById('pet-fecha-desde').addEventListener('change', renderControlCiudadano);
+document.getElementById('pet-fecha-hasta').addEventListener('change', renderControlCiudadano);
 
 /* ============ RESPALDO (compartir datos entre computadoras a mano) ============ */
 function descargarRespaldo(){

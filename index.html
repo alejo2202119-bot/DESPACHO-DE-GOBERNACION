@@ -259,27 +259,34 @@
         </div>
       </form>
     </div>
-    <div class="archive-controls">
-      <select id="ayuda-filter-dep"></select>
-      <select id="ayuda-filter-fuente">
-        <option value="">Todas las fuentes</option>
-        <option value="propio">Presupuesto propio</option>
-        <option value="fundacion">Fundación de la Familia Tachirense</option>
-        <option value="finanzas">Dirección de Finanzas</option>
-        <option value="extraordinaria">Partida Extraordinaria</option>
-      </select>
-      <select id="ayuda-filter-estado">
-        <option value="">Todos los estados</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="aprobada">Aprobada</option>
-        <option value="ejecutada">Ejecutada</option>
-      </select>
-    </div>
-    <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
-      <table>
-        <thead><tr><th>Descripción</th><th>Dependencia</th><th>Fuente</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
-        <tbody id="ayudas-body"></tbody>
-      </table>
+    <button type="button" class="btn registro-toggle" id="ayudas-registro-btn" onclick="toggleRegistro('ayudas-registro', 'ayudas-registro-btn', 'ayudas sociales')">Ver registro de ayudas sociales ▾</button>
+    <div class="registro-panel" id="ayudas-registro" style="display:none;">
+      <div class="archive-controls">
+        <input type="text" id="ayuda-search" placeholder="Buscar por descripción...">
+        <select id="ayuda-filter-dep"></select>
+        <select id="ayuda-filter-fuente">
+          <option value="">Todas las fuentes</option>
+          <option value="propio">Presupuesto propio</option>
+          <option value="fundacion">Fundación de la Familia Tachirense</option>
+          <option value="finanzas">Dirección de Finanzas</option>
+          <option value="extraordinaria">Partida Extraordinaria</option>
+        </select>
+        <select id="ayuda-filter-estado">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="aprobada">Aprobada</option>
+          <option value="ejecutada">Ejecutada</option>
+        </select>
+        <select id="ayuda-filter-anio"><option value="">Todos los años</option></select>
+        <label class="filter-date-label">Desde <input type="date" id="ayuda-fecha-desde"></label>
+        <label class="filter-date-label">Hasta <input type="date" id="ayuda-fecha-hasta"></label>
+      </div>
+      <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
+        <table>
+          <thead><tr><th>Descripción</th><th>Dependencia</th><th>Fuente</th><th>Monto</th><th>Estado</th><th>Fecha y hora</th></tr></thead>
+          <tbody id="ayudas-body"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -346,27 +353,33 @@
         </div>
       </form>
     </div>
-    <div class="archive-controls">
-      <input type="text" id="pet-search" placeholder="Buscar por nombre, asunto o número...">
-      <select id="pet-filter-estado">
-        <option value="">Todos los estados</option>
-        <option value="recibida">Recibida</option>
-        <option value="en_atencion">En atención</option>
-        <option value="respondida">Respondida</option>
-        <option value="archivada">Archivada</option>
-      </select>
-      <select id="pet-filter-medio">
-        <option value="">Todos los medios</option>
-        <option value="Físico">Físico</option>
-        <option value="Digital">Digital</option>
-        <option value="Ambos">Ambos</option>
-      </select>
-    </div>
-    <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
-      <table>
-        <thead><tr><th>N° Seguimiento</th><th>Ciudadano</th><th>Asunto</th><th>Medio</th><th>Estado</th><th>Fecha</th></tr></thead>
-        <tbody id="peticiones-body"></tbody>
-      </table>
+    <button type="button" class="btn registro-toggle" id="ciudadano-registro-btn" onclick="toggleRegistro('ciudadano-registro', 'ciudadano-registro-btn', 'peticiones ciudadanas')">Ver registro de peticiones ▾</button>
+    <div class="registro-panel" id="ciudadano-registro" style="display:none;">
+      <div class="archive-controls">
+        <input type="text" id="pet-search" placeholder="Buscar por nombre, asunto o número...">
+        <select id="pet-filter-estado">
+          <option value="">Todos los estados</option>
+          <option value="recibida">Recibida</option>
+          <option value="en_atencion">En atención</option>
+          <option value="respondida">Respondida</option>
+          <option value="archivada">Archivada</option>
+        </select>
+        <select id="pet-filter-medio">
+          <option value="">Todos los medios</option>
+          <option value="Físico">Físico</option>
+          <option value="Digital">Digital</option>
+          <option value="Ambos">Ambos</option>
+        </select>
+        <select id="pet-filter-anio"><option value="">Todos los años</option></select>
+        <label class="filter-date-label">Desde <input type="date" id="pet-fecha-desde"></label>
+        <label class="filter-date-label">Hasta <input type="date" id="pet-fecha-hasta"></label>
+      </div>
+      <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
+        <table>
+          <thead><tr><th>N° Seguimiento</th><th>Ciudadano</th><th>Asunto</th><th>Medio</th><th>Estado</th><th>Fecha y hora</th></tr></thead>
+          <tbody id="peticiones-body"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
