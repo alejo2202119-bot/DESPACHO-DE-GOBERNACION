@@ -10,24 +10,28 @@
 </head>
 <body>
 <div class="login-overlay" id="login-overlay">
-  <img class="login-bg-photo" src="assets/login-bg-trio.jpg" alt="">
-  <div class="login-bg-scrim"></div>
-  <div class="login-box">
-    <img class="login-logo" src="assets/logo-gobernacion-banner.png" alt="Gobernación del Estado Táchira">
-    <h2>Despacho Digital</h2>
-    <p>Acceso restringido — Gobernación del Estado Táchira</p>
-    <form id="login-form">
-      <div class="field">
-        <label>Usuario</label>
-        <input type="text" id="login-user" autocomplete="username" required>
-      </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="login-pass" autocomplete="current-password" required>
-      </div>
-      <div class="login-error" id="login-error" style="display:none;">Usuario o contraseña incorrectos.</div>
-      <button type="submit" class="btn primary" style="width:100%;">Ingresar</button>
-    </form>
+  <div class="login-stack">
+    <div class="login-photo-frame">
+      <img class="login-bg-photo" src="assets/login-bg-trio.jpg" alt="Simón Bolívar junto a Hugo Chávez y el Gobernador Freddy Bernal">
+      <div class="login-photo-fade"></div>
+    </div>
+    <div class="login-box">
+      <img class="login-logo" src="assets/logo-gobernacion-banner.png" alt="Gobernación del Estado Táchira">
+      <h2>Despacho Digital</h2>
+      <p>Acceso restringido — Gobernación del Estado Táchira</p>
+      <form id="login-form">
+        <div class="field">
+          <label>Usuario</label>
+          <input type="text" id="login-user" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="login-pass" autocomplete="current-password" required>
+        </div>
+        <div class="login-error" id="login-error" style="display:none;">Usuario o contraseña incorrectos.</div>
+        <button type="submit" class="btn primary" style="width:100%;">Ingresar</button>
+      </form>
+    </div>
   </div>
 </div>
 <div class="app-shell">
