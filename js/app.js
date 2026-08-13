@@ -99,11 +99,11 @@ function bindState(){
 window.__debugState = function(){ return STATE; };
 
 /* ============ UTILITIES ============ */
-function showToast(msg){
+function showToast(msg, duracionMs){
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2200);
+  setTimeout(()=>t.classList.remove('show'), duracionMs || 2200);
 }
 
 let modalMensajeLink = null;
@@ -940,7 +940,7 @@ function renderControlCiudadano(){
         rows += '<button class="btn small derive" onclick="notificarCiudadanoTelegram(' + p.id + ')">Notificar por Telegram</button>';
       }
       if(p.estado !== 'archivada'){
-        rows += '<button class="btn small reject" onclick="cambiarEstadoPeticion(' + p.id + ', \'archivada\')">Archivar</button>';
+        rows += '<button class="btn small reject" onclick="cambiarEstadoPeticion(' + p.id + ', \'archivada\')">Archivar petición</button>';
       }
       rows += '</div>';
 
@@ -1222,7 +1222,11 @@ async function cambiarEstadoPeticion(id, estado){
   p.estado = estado;
   await persist();
   renderAll();
-  showToast('Estado actualizado');
+  if(estado === 'archivada'){
+    showToast('Petición archivada. Sigue en el registro de Control Ciudadano (filtro "Archivada") — la sección Archivo del menú es solo para documentos, no para peticiones.', 4200);
+  } else {
+    showToast('Estado actualizado');
+  }
 }
 
 /* ============ RENDER: BANDEJA ============ */

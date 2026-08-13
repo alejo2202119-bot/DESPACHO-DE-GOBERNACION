@@ -343,6 +343,7 @@
     border-left:4px solid var(--gold);
     opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;
     z-index:50;
+    max-width:min(90vw, 480px);line-height:1.5;
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
 
