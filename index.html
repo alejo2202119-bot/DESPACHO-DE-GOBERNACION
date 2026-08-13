@@ -220,28 +220,6 @@
     <h2 class="view-title">Ayudas sociales</h2>
     <p class="view-sub">Control de ayudas por dependencia y fuente de financiamiento.</p>
     <div class="ayudas-summary" id="ayudas-summary"></div>
-    <div class="archive-controls">
-      <select id="ayuda-filter-dep"></select>
-      <select id="ayuda-filter-fuente">
-        <option value="">Todas las fuentes</option>
-        <option value="propio">Presupuesto propio</option>
-        <option value="fundacion">Fundación de la Familia Tachirense</option>
-        <option value="finanzas">Dirección de Finanzas</option>
-        <option value="extraordinaria">Partida Extraordinaria</option>
-      </select>
-      <select id="ayuda-filter-estado">
-        <option value="">Todos los estados</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="aprobada">Aprobada</option>
-        <option value="ejecutada">Ejecutada</option>
-      </select>
-    </div>
-    <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
-      <table>
-        <thead><tr><th>Descripción</th><th>Dependencia</th><th>Fuente</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
-        <tbody id="ayudas-body"></tbody>
-      </table>
-    </div>
     <div class="card">
       <h2 class="view-title" style="font-size:15px;">Registrar nueva ayuda social</h2>
       <form id="form-ayuda">
@@ -281,6 +259,28 @@
         </div>
       </form>
     </div>
+    <div class="archive-controls">
+      <select id="ayuda-filter-dep"></select>
+      <select id="ayuda-filter-fuente">
+        <option value="">Todas las fuentes</option>
+        <option value="propio">Presupuesto propio</option>
+        <option value="fundacion">Fundación de la Familia Tachirense</option>
+        <option value="finanzas">Dirección de Finanzas</option>
+        <option value="extraordinaria">Partida Extraordinaria</option>
+      </select>
+      <select id="ayuda-filter-estado">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="aprobada">Aprobada</option>
+        <option value="ejecutada">Ejecutada</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
+      <table>
+        <thead><tr><th>Descripción</th><th>Dependencia</th><th>Fuente</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody id="ayudas-body"></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- CONTROL CIUDADANO -->
@@ -291,28 +291,6 @@
       Cada petición puede generar un oficio dirigido al Dr. Freddy Bernal, redactado y reorganizado con IA a partir del caso — incluso si el ciudadano lo describió de forma coloquial. Esto funciona mientras ves este panel dentro de Claude.ai; si abres el archivo guardado fuera de ahí, el sistema usa automáticamente una plantilla básica editable en su lugar, sin romperse.
     </div>
     <div class="ayudas-summary" id="ciudadano-summary"></div>
-    <div class="archive-controls">
-      <input type="text" id="pet-search" placeholder="Buscar por nombre, asunto o número...">
-      <select id="pet-filter-estado">
-        <option value="">Todos los estados</option>
-        <option value="recibida">Recibida</option>
-        <option value="en_atencion">En atención</option>
-        <option value="respondida">Respondida</option>
-        <option value="archivada">Archivada</option>
-      </select>
-      <select id="pet-filter-medio">
-        <option value="">Todos los medios</option>
-        <option value="Físico">Físico</option>
-        <option value="Digital">Digital</option>
-        <option value="Ambos">Ambos</option>
-      </select>
-    </div>
-    <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
-      <table>
-        <thead><tr><th>N° Seguimiento</th><th>Ciudadano</th><th>Asunto</th><th>Medio</th><th>Estado</th><th>Fecha</th></tr></thead>
-        <tbody id="peticiones-body"></tbody>
-      </table>
-    </div>
     <div class="card">
       <h2 class="view-title" style="font-size:15px;">Registrar petición ciudadana</h2>
       <p class="guide-what" style="margin-bottom:16px;">Todos los datos del ciudadano son obligatorios — sin ellos completos no se puede registrar el caso.</p>
@@ -367,6 +345,28 @@
           <button type="submit" class="btn primary">Registrar petición</button>
         </div>
       </form>
+    </div>
+    <div class="archive-controls">
+      <input type="text" id="pet-search" placeholder="Buscar por nombre, asunto o número...">
+      <select id="pet-filter-estado">
+        <option value="">Todos los estados</option>
+        <option value="recibida">Recibida</option>
+        <option value="en_atencion">En atención</option>
+        <option value="respondida">Respondida</option>
+        <option value="archivada">Archivada</option>
+      </select>
+      <select id="pet-filter-medio">
+        <option value="">Todos los medios</option>
+        <option value="Físico">Físico</option>
+        <option value="Digital">Digital</option>
+        <option value="Ambos">Ambos</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px;">
+      <table>
+        <thead><tr><th>N° Seguimiento</th><th>Ciudadano</th><th>Asunto</th><th>Medio</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody id="peticiones-body"></tbody>
+      </table>
     </div>
   </div>
 
