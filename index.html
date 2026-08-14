@@ -10,31 +10,26 @@
 </head>
 <body>
 <div class="login-overlay" id="login-overlay">
-  <div class="login-sash" role="presentation" aria-hidden="true"></div>
   <div class="login-stack">
-    <div class="login-seal" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.9 6.26 6.85.77-5.12 4.71 1.42 6.76L12 16.9l-6.05 3.1 1.42-6.76-5.12-4.71 6.85-.77z"/></svg>
-    </div>
+    <div class="login-cockade" aria-hidden="true"><span>★</span></div>
+    <img class="login-logo" src="assets/logo-gobernacion-banner.png" alt="Gobernación del Estado Táchira">
+    <h2>Despacho Digital</h2>
+    <p>Acceso restringido — Gobernación del Estado Táchira</p>
     <div class="login-photo-frame">
       <img class="login-bg-photo" src="assets/login-bg-trio.jpg" alt="Simón Bolívar junto a Hugo Chávez y el Gobernador Freddy Bernal">
     </div>
-    <div class="login-box">
-      <img class="login-logo" src="assets/logo-gobernacion-banner.png" alt="Gobernación del Estado Táchira">
-      <h2>Despacho Digital</h2>
-      <p>Acceso restringido — Gobernación del Estado Táchira</p>
-      <form id="login-form">
-        <div class="field">
-          <label>Usuario</label>
-          <input type="text" id="login-user" autocomplete="username" required>
-        </div>
-        <div class="field">
-          <label>Contraseña</label>
-          <input type="password" id="login-pass" autocomplete="current-password" required>
-        </div>
-        <div class="login-error" id="login-error" style="display:none;">Usuario o contraseña incorrectos.</div>
-        <button type="submit" class="btn primary" style="width:100%;">Ingresar</button>
-      </form>
-    </div>
+    <form id="login-form">
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" id="login-user" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" autocomplete="current-password" required>
+      </div>
+      <div class="login-error" id="login-error" style="display:none;">Usuario o contraseña incorrectos.</div>
+      <button type="submit" class="btn primary" style="width:100%;">Ingresar</button>
+    </form>
   </div>
 </div>
 <div class="app-shell">
