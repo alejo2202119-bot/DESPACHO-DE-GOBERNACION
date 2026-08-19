@@ -232,6 +232,7 @@
   .estado-en_revision{background:var(--warn-bg);color:var(--warn);}
   .estado-en_despacho{background:#DCE4F2;color:var(--navy);}
   .estado-decidido{background:var(--ok-bg);color:var(--ok);}
+  .estado-rechazado-doc{background:var(--danger-bg);color:var(--danger);}
   .estado-archivado{background:#E7EAEE;color:var(--slate);}
   .estado-en_proceso{background:var(--warn-bg);color:var(--warn);}
   .estado-aprobada{background:var(--ok-bg);color:var(--ok);}

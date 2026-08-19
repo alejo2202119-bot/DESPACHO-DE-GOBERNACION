@@ -2,6 +2,34 @@
 const STORAGE_KEY = 'despacho-estado-v2';
 const ESTADOS = ['recibido','en_revision','en_despacho','decidido','archivado'];
 const ESTADO_LABELS = {recibido:'Recibido', en_revision:'En Revisión', en_despacho:'En Despacho', decidido:'Decidido', archivado:'Archivado'};
+
+// Un documento "decidido" puede ser Aprobado o Rechazado por el Gobernador — se
+// muestran distinto (no como un genérico "Decidido") para poder encontrar
+// fácilmente lo aprobado. Para documentos decididos antes de que existiera este
+// campo, se infiere del historial ("Aprobado por el Gobernador" / "Rechazado
+// por el Gobernador") para no dejar huérfanos los datos ya guardados.
+function docDecision(d){
+  if(d.decision) return d.decision;
+  if(d.estado !== 'decidido' || !Array.isArray(d.historial)) return null;
+  for(let i = d.historial.length - 1; i >= 0; i--){
+    const accion = d.historial[i].accion || '';
+    if(accion.startsWith('Rechazado por el Gobernador')) return 'rechazado';
+    if(accion.startsWith('Aprobado por el Gobernador')) return 'aprobado';
+  }
+  return null;
+}
+function docEstadoLabel(d){
+  if(d.estado === 'decidido'){
+    const decision = docDecision(d);
+    if(decision === 'aprobado') return 'Aprobado';
+    if(decision === 'rechazado') return 'Rechazado';
+  }
+  return ESTADO_LABELS[d.estado];
+}
+function docEstadoClass(d){
+  if(d.estado === 'decidido' && docDecision(d) === 'rechazado') return 'estado-rechazado-doc';
+  return 'estado-' + d.estado;
+}
 const FUENTE_LABELS = {propio:'Presupuesto propio', fundacion:'Fundación de la Familia Tachirense', finanzas:'Dirección de Finanzas', extraordinaria:'Partida Extraordinaria'};
 const AYUDA_ESTADO_LABELS = {pendiente:'Pendiente', aprobada:'Aprobada', ejecutada:'Ejecutada'};
 const CONTRAT_ESTADO_LABELS = {en_proceso:'En proceso', aprobada:'Aprobada', ejecutada:'Ejecutada'};
@@ -320,7 +348,7 @@ function seedDocumentos(){
     {id:3, tracking:'DES-'+y+'-0003', remitente:'ODACYSS', tipo:'Informe', asunto:'Informe trimestral de atención de solicitudes ciudadanas', direccion:'Despacho del Gobernador', dependenciaId:'odacyss', prioridad:'baja', vencimiento:null, notas:'', estado:'en_revision', recibido:daysFromToday(-1), historial:[{fecha:daysFromToday(-1), accion:'Documento recibido y digitalizado'}]},
     {id:4, tracking:'DES-'+y+'-0004', remitente:'Dirección de Educación', tipo:'Solicitud', asunto:'Solicitud de traslado de personal docente para el nuevo período', direccion:'Dirección de Educación', dependenciaId:null, prioridad:'media', vencimiento:daysFromToday(10), notas:'', estado:'recibido', recibido:daysFromToday(0), historial:[{fecha:daysFromToday(0), accion:'Documento recibido y digitalizado'}]},
     {id:5, tracking:'DES-'+y+'-0005', remitente:'Norte de Santander - Empalme Regional', tipo:'Comunicación Oficial', asunto:'Agenda conjunta de cooperación fronteriza y ayuda humanitaria', direccion:'Relaciones Binacionales', dependenciaId:'observatorio-frontera', prioridad:'alta', vencimiento:daysFromToday(-1), notas:'Vencido: requiere atención inmediata', estado:'en_despacho', recibido:daysFromToday(-6), historial:[{fecha:daysFromToday(-6), accion:'Documento recibido y digitalizado'},{fecha:daysFromToday(-4), accion:'Revisado por Relaciones Binacionales'},{fecha:daysFromToday(-2), accion:'Elevado al Despacho para decisión'}]},
-    {id:6, tracking:'DES-'+y+'-0006', remitente:'Consultoría Jurídica', tipo:'Punto de Cuenta', asunto:'Revisión de convenio interinstitucional con la UCAT', direccion:'Consultoría Jurídica', dependenciaId:'consultoria-juridica', prioridad:'media', vencimiento:null, notas:'', estado:'decidido', recibido:daysFromToday(-10), historial:[{fecha:daysFromToday(-10), accion:'Documento recibido y digitalizado'},{fecha:daysFromToday(-7), accion:'Revisado por Consultoría Jurídica'},{fecha:daysFromToday(-5), accion:'Elevado al Despacho para decisión'},{fecha:daysFromToday(-4), accion:'Aprobado por el Gobernador'}]},
+    {id:6, tracking:'DES-'+y+'-0006', remitente:'Consultoría Jurídica', tipo:'Punto de Cuenta', asunto:'Revisión de convenio interinstitucional con la UCAT', direccion:'Consultoría Jurídica', dependenciaId:'consultoria-juridica', prioridad:'media', vencimiento:null, notas:'', estado:'decidido', decision:'aprobado', recibido:daysFromToday(-10), historial:[{fecha:daysFromToday(-10), accion:'Documento recibido y digitalizado'},{fecha:daysFromToday(-7), accion:'Revisado por Consultoría Jurídica'},{fecha:daysFromToday(-5), accion:'Elevado al Despacho para decisión'},{fecha:daysFromToday(-4), accion:'Aprobado por el Gobernador'}]},
     {id:7, tracking:'DES-'+y+'-0007', remitente:'Gestión Social', tipo:'Informe', asunto:'Reporte de ejecución del programa de Autoconstrucción', direccion:'Gestión Social', dependenciaId:'autoconstruccion', prioridad:'baja', vencimiento:null, notas:'', estado:'archivado', recibido:daysFromToday(-20), historial:[{fecha:daysFromToday(-20), accion:'Documento recibido y digitalizado'},{fecha:daysFromToday(-15), accion:'Revisado'},{fecha:daysFromToday(-12), accion:'Derivado a Gestión Social'},{fecha:daysFromToday(-10), accion:'Resuelto y archivado'}]}
   ];
 }
@@ -1273,6 +1301,7 @@ async function decidir(id, nuevoEstado, decisionLabel){
   const doc = DOCS.find(d => d.id === id);
   if(!doc) return;
   doc.estado = nuevoEstado;
+  doc.decision = decisionLabel === 'Aprobado' ? 'aprobado' : (decisionLabel === 'Rechazado' ? 'rechazado' : null);
   doc.historial.push({fecha: ahoraISO(), accion: decisionLabel + ' por el Gobernador'});
   await persist();
   renderAll();
@@ -1331,7 +1360,10 @@ function renderArchivo(){
 
   let filtered = DOCS.filter(d => {
     const matchSearch = !search || d.asunto.toLowerCase().includes(search) || d.remitente.toLowerCase().includes(search) || d.tracking.toLowerCase().includes(search);
-    const matchEstado = !estadoFilter || d.estado === estadoFilter;
+    let matchEstado = true;
+    if(estadoFilter === 'aprobado') matchEstado = d.estado === 'decidido' && docDecision(d) === 'aprobado';
+    else if(estadoFilter === 'rechazado') matchEstado = d.estado === 'decidido' && docDecision(d) === 'rechazado';
+    else if(estadoFilter) matchEstado = d.estado === estadoFilter;
     return matchSearch && matchEstado;
   });
   filtered.sort((a,b) => new Date(b.recibido) - new Date(a.recibido));
@@ -1346,7 +1378,7 @@ function renderArchivo(){
       '<td><span class="stamp" style="font-size:10.5px;">' + d.tracking + '</span></td>' +
       '<td>' + escapeHtml(d.asunto) + '</td>' +
       '<td>' + escapeHtml(d.remitente) + '</td>' +
-      '<td><span class="estado-pill estado-' + d.estado + '">' + ESTADO_LABELS[d.estado] + '</span></td>' +
+      '<td><span class="estado-pill ' + docEstadoClass(d) + '">' + docEstadoLabel(d) + '</span></td>' +
       '<td>' + fmtDateTime(d.recibido) + '</td></tr>';
 
     if(expandedRow === d.id){
