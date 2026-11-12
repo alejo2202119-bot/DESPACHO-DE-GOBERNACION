@@ -21,15 +21,12 @@
       <h2>Acceso al sistema</h2>
       <p>Panel interno de gestión — uso restringido a personal autorizado.</p>
       <form id="login-form">
-        <div class="field">
-          <label>Correo electrónico</label>
-          <input type="email" id="login-user" autocomplete="username" placeholder="tu@correo.com" required>
-        </div>
+        <input type="email" id="login-user" autocomplete="username" value="despacho@1.com" hidden>
         <div class="field">
           <label>Contraseña</label>
-          <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••" required>
+          <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••" required autofocus>
         </div>
-        <div class="login-error" id="login-error" style="display:none;">Usuario o contraseña incorrectos.</div>
+        <div class="login-error" id="login-error" style="display:none;">Contraseña incorrecta.</div>
         <button type="submit" class="login-submit">Ingresar</button>
       </form>
     </div>

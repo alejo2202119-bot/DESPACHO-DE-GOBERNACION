@@ -1701,7 +1701,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     await firebaseAuthInstance.signInWithEmailAndPassword(correo, pass);
     // onAuthStateChanged (más abajo) se encarga de ocultar el overlay y cargar los datos.
   }catch(err){
-    errorEl.textContent = 'Usuario o contraseña incorrectos.';
+    errorEl.textContent = 'Contraseña incorrecta.';
     errorEl.style.display = 'block';
   }finally{
     btn.disabled = false;
