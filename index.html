@@ -10,28 +10,30 @@
 </head>
 <body>
 <div class="login-overlay" id="login-overlay">
+  <div class="login-grid" aria-hidden="true"></div>
   <div class="login-stack">
-    <div class="login-photo-frame">
-      <img class="login-bg-photo" src="assets/login-bg-trio.jpg" alt="Simón Bolívar junto a Hugo Chávez y el Gobernador Freddy Bernal">
+    <div class="login-badge">
+      <img src="assets/logo-gobernacion-banner.png" alt="">
+      <span>Gobernación del Estado Táchira</span>
     </div>
-    <div class="login-stack-divider" aria-hidden="true"></div>
-    <div class="login-box">
-      <img class="login-logo" src="assets/logo-gobernacion-banner.png" alt="Gobernación del Estado Táchira">
-      <h2>Despacho Digital</h2>
-      <p>Acceso restringido — Gobernación del Estado Táchira</p>
+    <div class="login-card">
+      <span class="login-kicker">Despacho Digital</span>
+      <h2>Acceso al sistema</h2>
+      <p>Panel interno de gestión — uso restringido a personal autorizado.</p>
       <form id="login-form">
         <div class="field">
           <label>Usuario</label>
-          <input type="text" id="login-user" autocomplete="username" required>
+          <input type="text" id="login-user" autocomplete="username" placeholder="Tu usuario" required>
         </div>
         <div class="field">
           <label>Contraseña</label>
-          <input type="password" id="login-pass" autocomplete="current-password" required>
+          <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••" required>
         </div>
         <div class="login-error" id="login-error" style="display:none;">Usuario o contraseña incorrectos.</div>
-        <button type="submit" class="btn primary" style="width:100%;">Ingresar</button>
+        <button type="submit" class="login-submit">Ingresar</button>
       </form>
     </div>
+    <p class="login-foot">Sistema Integral de Gestión · Conexión segura y datos sincronizados en tiempo real</p>
   </div>
 </div>
 <div class="app-shell">

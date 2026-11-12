@@ -392,28 +392,47 @@
 
   /* GUIA DE USO */
   .guide-intro{
-    background:linear-gradient(135deg, var(--navy), var(--navy-deep));
-    color:#fff;border-radius:18px;padding:26px 28px;margin-bottom:24px;
-    box-shadow:var(--shadow);
-    border-top:5px solid var(--gold);
+    position:relative;overflow:hidden;
+    background:
+      radial-gradient(640px 320px at 8% -20%, rgba(255,199,44,0.24), transparent 60%),
+      radial-gradient(560px 360px at 104% 110%, rgba(30,136,229,0.22), transparent 58%),
+      linear-gradient(135deg, #0F2447 0%, #081530 100%);
+    color:#fff;border-radius:20px;padding:28px 30px;margin-bottom:22px;
+    box-shadow:0 20px 48px rgba(6,15,35,0.28);
   }
-  .guide-intro h3{margin:0 0 12px;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;letter-spacing:-0.01em;color:var(--gold);}
-  .guide-intro ul{margin:0;padding-left:20px;font-size:13px;line-height:1.7;}
-  .guide-intro li{margin-bottom:6px;}
-  .guide-intro li strong{color:var(--gold);}
+  .guide-intro::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:var(--flag-stripes);
+  }
+  .guide-intro h3{margin:0 0 14px;font-family:'Inter',sans-serif;font-size:17px;font-weight:800;letter-spacing:-0.01em;color:#fff;}
+  .guide-intro ul{margin:0;padding-left:0;list-style:none;font-size:13px;line-height:1.6;display:flex;flex-direction:column;gap:10px;}
+  .guide-intro li{position:relative;padding-left:26px;color:rgba(255,255,255,0.82);}
+  .guide-intro li::before{
+    content:'✓';position:absolute;left:0;top:0;
+    width:18px;height:18px;border-radius:50%;background:rgba(255,199,44,0.18);color:var(--gold);
+    font-size:11px;font-weight:800;line-height:18px;text-align:center;
+  }
+  .guide-intro li strong{color:#fff;}
   .guide-section{
-    background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:16px;
-    padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow);
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    padding:20px 22px;margin-bottom:14px;box-shadow:var(--shadow);
+    transition:box-shadow .15s ease, transform .15s ease;
   }
+  .guide-section:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);}
   .guide-section h4{
-    font-family:'Inter',sans-serif;font-size:16.5px;font-weight:800;letter-spacing:-0.01em;margin:0 0 6px;color:var(--navy-deep);
+    display:flex;align-items:center;gap:10px;
+    font-family:'Inter',sans-serif;font-size:16px;font-weight:800;letter-spacing:-0.01em;margin:0 0 8px;color:var(--navy-deep);
+    padding-bottom:10px;border-bottom:1px solid var(--line-soft);
   }
   .guide-section .guide-what{font-size:13px;color:var(--slate);margin:0 0 14px;line-height:1.55;}
-  .guide-buttons{display:flex;flex-direction:column;gap:8px;}
+  .guide-buttons{display:flex;flex-direction:column;gap:7px;}
   .guide-btn-row{
     display:flex;gap:12px;align-items:flex-start;font-size:12.5px;line-height:1.55;
-    padding:9px 12px;background:var(--surface-alt);border-radius:8px;
+    padding:10px 13px;background:var(--surface-alt);border-radius:10px;
+    border-left:3px solid var(--line);
+    transition:border-color .15s ease;
   }
+  .guide-btn-row:hover{border-left-color:var(--bronze);}
   .guide-btn-row .gb-name{font-weight:700;color:var(--navy);flex-shrink:0;min-width:170px;}
   .guide-btn-row .gb-desc{color:var(--ink);}
   @media (max-width:640px){
@@ -422,54 +441,101 @@
   }
 
   /* LOGIN */
-  /* La foto es la pieza grande y protagonista arriba de la tarjeta. El fondo se
-     mantiene sólido y sereno (sin fotos de bandera detrás — ya se probó y no
-     funcionó), afinado con más profundidad y un halo dorado más rico. */
+  /* Estilo "panel de acceso" moderno: fondo oscuro con mesh de gradientes,
+     retícula sutil tipo dev-tool, y una tarjeta de cristal (glassmorphism).
+     Sin fotografías — el protagonismo lo lleva la tipografía y la luz. */
   .login-overlay{
     position:fixed;inset:0;z-index:1000;
     display:flex;align-items:center;justify-content:center;padding:24px;
-    overflow-y:auto;
+    overflow-y:auto;overflow-x:hidden;
     background:
-      radial-gradient(1200px 800px at 50% -18%, rgba(255,199,44,0.14), transparent 58%),
-      radial-gradient(900px 650px at 50% 118%, rgba(208,17,43,0.09), transparent 55%),
-      linear-gradient(160deg, #1B3868 0%, #0A1830 100%);
+      radial-gradient(900px 620px at 10% -8%, rgba(255,199,44,0.22), transparent 60%),
+      radial-gradient(820px 680px at 106% 18%, rgba(30,136,229,0.20), transparent 58%),
+      radial-gradient(760px 560px at 50% 122%, rgba(208,17,43,0.16), transparent 58%),
+      linear-gradient(165deg, #0C1C38 0%, #060E1E 100%);
   }
-  .login-stack{
-    position:relative;z-index:1;
-    width:100%;max-width:460px;
-    border-radius:22px;overflow:hidden;
-    box-shadow:0 34px 80px rgba(2,10,24,0.55);
-    border:1px solid rgba(255,199,44,0.45);
-    margin:auto;
+  .login-grid{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 38%, black 35%, transparent 82%);
+    mask-image:radial-gradient(ellipse 75% 65% at 50% 38%, black 35%, transparent 82%);
   }
-  .login-photo-frame{width:100%;line-height:0;background:#1a2c4a;}
-  .login-bg-photo{display:block;width:100%;height:auto;}
-  /* Franja tricolor fina, cosiendo la foto con el formulario */
-  .login-stack-divider{height:5px;width:100%;background:var(--flag-stripes);}
-  .login-box{
-    position:relative;z-index:1;
-    background:var(--surface);padding:26px 32px 28px;
-    text-align:center;
+  .login-stack{position:relative;z-index:1;width:100%;max-width:392px;margin:auto;}
+  .login-badge{
+    display:flex;align-items:center;gap:9px;width:fit-content;max-width:100%;
+    margin:0 auto 20px;padding:6px 16px 6px 7px;border-radius:99px;
+    background:rgba(255,255,255,0.055);border:1px solid rgba(255,255,255,0.12);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   }
-  .login-logo{height:50px;width:auto;margin-bottom:12px;border-radius:6px;}
-  .login-box h2{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-0.01em;margin:0 0 4px;color:var(--navy-deep);font-size:20px;}
-  .login-box > p{margin:0 0 20px;color:var(--slate);font-size:12.5px;}
-  .login-box .field{text-align:left;margin-bottom:12px;}
-  .login-error{color:var(--danger);font-size:12px;margin:-4px 0 10px;text-align:left;}
+  .login-badge img{height:24px;width:24px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+  .login-badge span{font-size:11px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,0.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .login-card{
+    position:relative;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:22px;
+    padding:34px 30px 28px;
+    box-shadow:0 30px 70px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+  .login-card::before{
+    content:'';position:absolute;top:0;left:22px;right:22px;height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,199,44,0.65), transparent);
+  }
+  .login-kicker{
+    display:block;text-align:center;font-size:11px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:10px;
+  }
+  .login-card h2{
+    font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-0.02em;
+    font-size:24px;margin:0 0 8px;color:#fff;text-align:center;
+  }
+  .login-card > p{margin:0 0 26px;color:rgba(255,255,255,0.5);font-size:12.5px;text-align:center;line-height:1.5;}
+  .login-card .field{text-align:left;margin-bottom:15px;}
+  .login-card .field label{color:rgba(255,255,255,0.55);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+  .login-card .field input{
+    background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.14);color:#fff;
+    border-radius:10px;padding:11px 13px;font-size:14px;
+    transition:border-color .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .login-card .field input::placeholder{color:rgba(255,255,255,0.28);}
+  .login-card .field input:focus{
+    outline:none;border-color:var(--gold);background:rgba(255,255,255,0.075);
+    box-shadow:0 0 0 3px rgba(255,199,44,0.16);
+  }
+  .login-error{color:#ff9c9c;font-size:12px;margin:-6px 0 12px;text-align:left;}
+  .login-submit{
+    display:block;width:100%;padding:12.5px;margin-top:4px;border:none;border-radius:10px;
+    background:linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+    color:#231700;font-family:'Inter',sans-serif;font-weight:800;font-size:14px;letter-spacing:.01em;
+    cursor:pointer;box-shadow:0 12px 26px rgba(255,199,44,0.22);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .login-submit:hover{transform:translateY(-1px);box-shadow:0 16px 32px rgba(255,199,44,0.32);}
+  .login-submit:active{transform:translateY(0);}
+  .login-foot{margin:18px 0 0;text-align:center;font-size:11px;color:rgba(255,255,255,0.32);letter-spacing:.01em;}
 
   @media (max-height:760px){
-    .login-stack{max-width:380px;}
-    .login-box{padding:18px 26px 22px;}
-    .login-logo{height:40px;margin-bottom:8px;}
-    .login-box h2{font-size:17px;}
-    .login-box > p{margin-bottom:14px;}
-    .login-box .field{margin-bottom:9px;}
+    .login-badge{margin-bottom:14px;}
+    .login-card{padding:26px 26px 22px;}
+    .login-card h2{font-size:20px;}
+    .login-card > p{margin-bottom:20px;}
+    .login-card .field{margin-bottom:11px;}
+    .login-foot{margin-top:12px;}
   }
   @media (max-height:620px){
-    .login-stack{max-width:300px;}
-    .login-box{padding:14px 20px 18px;}
-    .login-logo{height:34px;margin-bottom:6px;}
-    .login-box > p{margin-bottom:10px;}
+    .login-stack{max-width:330px;}
+    .login-badge{margin-bottom:10px;padding:4px 12px 4px 5px;}
+    .login-badge img{height:20px;width:20px;}
+    .login-card{padding:18px 20px 16px;}
+    .login-kicker{margin-bottom:6px;}
+    .login-card h2{font-size:17px;margin-bottom:4px;}
+    .login-card > p{margin-bottom:14px;font-size:11.5px;}
+    .login-card .field{margin-bottom:8px;}
+    .login-foot{display:none;}
   }
 
   /* MESSAGE MODAL */
