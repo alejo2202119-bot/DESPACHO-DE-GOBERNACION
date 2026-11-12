@@ -1,12 +1,12 @@
-# Despacho Digital — Gobernación del Estado Táchira
+# Agenda por Dirección — Gobernación del Estado Táchira
 
-Sistema de gestión para el Despacho del Gobernador: correspondencia, dependencias,
-presupuesto, control ciudadano y ayudas sociales.
+Calendario compartido para que cada dependencia o ente de la Gobernación
+planifique, día por día, qué va a hacer.
 
-## Cómo funciona de verdad (arquitectura actual)
+## Cómo funciona
 
-Es un sitio **100% estático** (HTML + CSS + JS, sin servidor propio) conectado a una
-base de datos en la nube para que los datos se vean iguales en cualquier computadora:
+Sitio **100% estático** (HTML + CSS + JS, sin servidor propio) conectado a
+Firestore para que todas las direcciones vean los mismos datos en vivo:
 
 ```
 Navegador (cualquier computadora)
@@ -15,70 +15,14 @@ Navegador (cualquier computadora)
    │
    ├── Cloud Firestore (proyecto "despacho-digital-6999f")
    │     └── colección "despacho", documento "estado"
-   │         → una sola escritura/lectura en tiempo real (onSnapshot) por cada
-   │           cambio: registrar, editar, responder, etc.
+   │         → una sola escritura/lectura en tiempo real (onSnapshot) por cada cambio
    │
-   ├── localStorage (del navegador)
-   │     → copia local instantánea: pinta la pantalla sin esperar a la nube,
-   │       y sirve de respaldo si el navegador pierde la conexión.
-   │
-   └── Botones "Descargar datos" / "Cargar datos"
-         → exportar/importar el JSON completo a mano — un respaldo manual,
-           no la forma principal de compartir (eso ya lo hace Firestore solo).
+   └── localStorage (del navegador)
+         → copia local instantánea, pinta la pantalla sin esperar a la nube y
+           sirve de respaldo si el navegador pierde la conexión.
 ```
 
-**Lo que esto significa en la práctica:** cualquiera que abra el enlace del sistema
-ve los mismos datos, en vivo, sin que nadie tenga que mandar ni cargar ningún
-archivo. Los botones de descargar/cargar quedan como red de seguridad.
-
-### Firebase / Firestore
-
-- Proyecto: `despacho-digital-6999f`, plan gratuito (Spark, sin tarjeta).
-- Configuración (`FIREBASE_CONFIG`) al principio de `js/app.js`. El `apiKey` de un
-  proyecto Firebase **no es secreto** — así lo documenta Google: el control de
-  acceso lo hacen las reglas de seguridad de Firestore, no ocultar ese valor. Por
-  eso está a la vista en el código sin problema.
-- **Reglas de seguridad actuales (`firestore.rules`):** el documento `despacho/estado`
-  solo se puede leer o escribir con una sesión real de **Firebase Authentication**
-  (`allow read, write: if request.auth != null`). Antes estaba abierto a cualquiera
-  (`if true`) y el login en pantalla era solo una cortina visual en el navegador —
-  cualquiera que supiera el `projectId` podía leer o borrar los datos directamente
-  por la API de Firestore, sin tocar el login. Eso ya no es así: sin iniciar sesión
-  de verdad contra Firebase Auth, Firestore rechaza la petición con 403, sin
-  importar qué tan bien copiado esté el resto del código.
-- **Login real contra Firebase Auth:** no hay usuario/clave fijos escondidos en el
-  código (ya no existe `LOGIN_USER`/`LOGIN_PASS`). El formulario llama a
-  `firebaseAuthInstance.signInWithEmailAndPassword(correo, clave)`; la cuenta vive
-  en Firebase Auth del proyecto (Console → Authentication → Users), no en el
-  código fuente. La sesión persiste entre recargas (comportamiento por defecto del
-  SDK) hasta que se usa "Cerrar sesión".
-- **La llave del navegador (`apiKey`) está restringida por dominio** (Google Cloud
-  Console → APIs y servicios → Credenciales → esa llave → "Restricciones de
-  aplicación: referentes HTTP") a `despacho-digital-6999f.web.app` y
-  `despacho-digital-6999f.firebaseapp.com`. El `apiKey` sigue sin ser secreto (así
-  lo documenta Google — el control real lo hacen las reglas de arriba), pero esta
-  restricción evita que alguien copie el valor y lo reutilice sirviendo peticiones
-  desde otro sitio con el navegador. Ojo: es una restricción por cabecera
-  `Referer`, útil contra copias casuales del código, no contra un atacante que
-  arma sus peticiones a mano fuera del navegador — la defensa real sigue siendo
-  la regla `request.auth != null`.
-- **El SDK de Firebase se carga dinámicamente** desde `js/app.js`
-  (función `ensureFirebase()`), no con una etiqueta `<script src>` fija en el
-  HTML. Esto no es casualidad: algunos servicios que sirven el HTML de forma
-  indirecta (por ejemplo `htmlpreview.github.io`, que lo carga con JavaScript y
-  reescribe la página) **no ejecutan** etiquetas `<script src>` que apunten a
-  dominios externos que no sean el propio repositorio — el script queda mudo, sin
-  ningún error visible. Cargarlo dinámicamente evita ese problema y funciona igual
-  en cualquier forma de hospedaje. La misma técnica ya se usaba para cargar jsPDF
-  (`ensureJsPDF()`) y quedó documentada aquí para que quien toque este código no
-  vuelva a tropezar con lo mismo.
-- Si `FIREBASE_CONFIG.apiKey` quedara vacío, o el SDK no carga por alguna razón,
-  el sistema cae automáticamente a modo solo-local (`localStorage`) **sin pedir
-  login** — no existe ningún login de emergencia hardcodeado como respaldo; sin
-  Firebase no hay forma de autenticar de verdad, así que no tiene sentido fingir
-  una.
-
-### Dónde vive el sitio
+## Dónde vive el sitio
 
 **Firebase Hosting**, no GitHub:
 
@@ -88,122 +32,42 @@ https://despacho-digital-6999f.web.app
 
 Se actualiza con `firebase deploy --only hosting --project despacho-digital-6999f`
 (y `firebase deploy --only firestore:rules --project despacho-digital-6999f` si se
-tocan las reglas). El repositorio de GitHub sigue existiendo como respaldo e
-historial del código para quien lo desarrolla, pero el sitio que usan las personas
-no depende de GitHub para nada — si GitHub desapareciera, el sitio en Firebase
-Hosting sigue funcionando igual.
+tocan las reglas). El repositorio de GitHub es solo respaldo e historial del
+código — el sitio que usan las personas no depende de él para nada.
 
-## Qué NO debe volver
+## Seguridad
 
-- **La "Agenda del Gobernador"** (módulo de actividades programadas con
-  recordatorios) se eliminó a propósito. No se debe reintroducir.
-- **WhatsApp** se eliminó a propósito — **solo Telegram**. No agregues botones,
-  campos ni links de WhatsApp en ninguna parte del sistema.
+- **Login real contra Firebase Authentication** (correo/contraseña) — no hay
+  clave fija escondida en el código. El correo queda fijo en un campo oculto
+  del formulario (no es la parte secreta); la persona solo escribe la
+  contraseña.
+- **Firestore exige sesión real** (`firestore.rules`: `allow read, write: if
+  request.auth != null`). Sin iniciar sesión, la base de datos rechaza
+  cualquier lectura o escritura con 403 — así el código se pueda copiar
+  completo, sin la cuenta real no hay acceso a los datos.
+- La llave de API del navegador está restringida por dominio (Google Cloud
+  Console → Credenciales) para que no se pueda reutilizar copiándola a otro
+  sitio.
 
-## Datos obligatorios del ciudadano
+## La única vista: Agenda por Dirección
 
-El formulario de "Registrar petición ciudadana" (Control Ciudadano) exige **todos**
-estos campos para poder guardar un caso — no son opcionales:
+- **Dirección / Ente**: selector con las direcciones ya registradas. Si falta
+  alguna, se agrega con el campo "¿Falta tu dirección en la lista?".
+- **Calendario**: grilla del mes, navegable (‹ Anterior / Siguiente ›), con
+  el número de actividades planificadas por día.
+- Al seleccionar un día: formulario para anotar qué se hará, y la lista de
+  esas actividades con "Marcar realizada/pendiente" y "Eliminar".
 
-- Nombres
-- Apellidos
-- Cédula
-- Correo electrónico
-- Número telefónico
-- Dirección de habitación
-
-Están validados en el handler de `form-peticion` en `js/app.js` (busca
-`if(!nombres || !apellidos || !cedula || !correo || !telefono || !direccion...)`).
-Si tocas ese formulario, mantén esa validación — no la relajes sin que te lo pidan.
-
-Estos datos (cédulas, teléfonos, direcciones) son información personal real de
-ciudadanos. Con las reglas de Firestore actuales (`request.auth != null`), solo
-quien inicie sesión real en Firebase Auth puede leerlos o escribirlos.
-
-## Estructura del proyecto
-
-```
-despacho-digital/
-├── index.html          Estructura de las 9 vistas + pantalla de login
-├── css/
-│   └── styles.css       Todos los estilos (paleta azul/blanco)
-├── js/
-│   └── app.js            Estado, render, persistencia (Firestore + localStorage), PDF, IA
-├── assets/
-│   ├── logo-gobernacion-banner.png   Header + membrete de PDF
-│   ├── logo-amemos-tachira.png       Footer
-│   ├── logo-bernal-cumple.png        Footer
-│   ├── flag-stripe.png               Footer
-│   ├── login-bg-chavez.jpg           Fondo del login (retrato izquierdo)
-│   ├── login-bg-bernal-evento.jpg    Fondo del login (backdrop difuminado)
-│   └── login-bg-bolivar.jpg          Fondo del login (retrato derecho)
-└── README.md            Este archivo
-```
-
-`index.html` referencia `css/styles.css` y `js/app.js` con rutas relativas normales,
-y las imágenes con `<img src="assets/...">` — ya no hay nada en base64 embebido.
-
-## Login
-
-Usuario: `ISAAC` — Contraseña: `DESPACHOG` (constantes `LOGIN_USER` / `LOGIN_PASS` al
-final de `js/app.js`). Es una traba de acceso simple, no seguridad real — la
-contraseña queda visible en el código fuente.
-
-## Módulos (9 vistas, en el orden del menú lateral)
-
-1. **Guía de Uso** — vista de ayuda en español simple, explica cada botón de cada módulo. Es la vista por defecto al cargar.
-2. **Resumen** — alertas automáticas + indicadores generales.
-3. **Dependencias** — las 5 dependencias del Despacho con presupuesto y metas POA,
-   más el directorio de "Otras direcciones y entes" (secretarías/institutos/fundaciones
-   sin presupuesto propio en el sistema).
-4. **Control Ciudadano** — peticiones ciudadanas con datos completos obligatorios
-   (ver sección arriba), respuesta, notificación por Telegram, generación de oficio
-   con IA, envío a la Bandeja del Gobernador.
-5. **Ayudas Sociales** — registro de ayudas por dependencia y fuente de financiamiento.
-6. **Bandeja del Gobernador** — documentos pendientes de firma/decisión.
-7. **Tablero** — la misma correspondencia en vista Kanban.
-8. **Nueva Entrada** — formulario de registro de documentos entrantes.
-9. **Archivo** — búsqueda histórica con trazabilidad.
-
-## Mensajería: solo Telegram
-
-`buildTelegramLink(destino, mensaje)` en `js/app.js` genera el link — si `destino`
-empieza con `@`, abre el chat directo; si no, abre el selector genérico de Telegram
-(`t.me/share/url`). El modal (`msg-modal-overlay` en el HTML, funciones
-`abrirModalMensaje`/`cerrarModalMensaje`/`copiarModalMensaje`) siempre muestra el
-mensaje en pantalla antes de abrir Telegram — nunca se abre solo. Hoy en día el único
-lugar que usa esto es "Notificar por Telegram" en el detalle de una petición
-ciudadana (`notificarCiudadanoTelegram`).
-
-## Generación de oficios con IA — todavía pendiente
-
-`generarOficio()` en Control Ciudadano llama directo a
-`fetch("https://api.anthropic.com/v1/messages")` sin API key. Fuera del entorno de
-artifacts de Claude.ai esa llamada siempre falla (sin credenciales), y el `catch`
-genera automáticamente una plantilla básica editable en su lugar — no rompe nada,
-simplemente no usa IA real. Para que sí la use hace falta un backend propio (no
-existe todavía) que reciba la petición del navegador, llame a la API de Anthropic
-con una API key guardada del lado del servidor (nunca en el navegador) y devuelva
-el texto.
-
-## Dependencias externas (JS), ambas cargadas dinámicamente
-
-- **Firebase** (`ensureFirebase()`) — ver sección de Firestore arriba.
-- **jsPDF** (`ensureJsPDF()`, `https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js`)
-  se carga solo cuando se pulsa "Descargar PDF". Requiere internet la primera vez;
-  si falla o tarda más de 8 segundos en responder, avisa con un toast en vez de
-  dejar el botón colgado indefinidamente.
+Datos en `STATE`:
+- `direcciones`: `[{id, nombre}]`
+- `agendaActividades`: `[{id, unidadId, fecha, actividad, estado, creadoEn}]`
 
 ## Cómo probarlo
 
-No se puede simplemente abrir `index.html` con doble clic — las rutas relativas a
-`css/`, `js/` y `assets/` necesitan servirse por HTTP:
+No se puede abrir `index.html` con doble clic — las rutas relativas a `css/`,
+`js/` necesitan servirse por HTTP:
 
 ```bash
 python3 -m http.server 8000
 # luego abrir http://localhost:8000 en el navegador
 ```
-
-El guardado funciona igual con doble clic o con servidor propio en cuanto a
-Firestore (es una llamada de red normal); lo que **no** funciona con doble clic
-(protocolo `file://`) son las rutas relativas de arriba.
