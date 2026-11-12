@@ -11,7 +11,7 @@ base de datos en la nube para que los datos se vean iguales en cualquier computa
 ```
 Navegador (cualquier computadora)
    │
-   ├── index.html + css/styles.css + js/app.js   ← el sitio en sí, servido por GitHub
+   ├── index.html + css/styles.css + js/app.js   ← el sitio en sí, servido por Firebase Hosting
    │
    ├── Cloud Firestore (proyecto "despacho-digital-6999f")
    │     └── colección "despacho", documento "estado"
@@ -38,13 +38,30 @@ archivo. Los botones de descargar/cargar quedan como red de seguridad.
   proyecto Firebase **no es secreto** — así lo documenta Google: el control de
   acceso lo hacen las reglas de seguridad de Firestore, no ocultar ese valor. Por
   eso está a la vista en el código sin problema.
-- **Reglas de seguridad actuales:** el documento `despacho/estado` está abierto
-  (`allow read, write: if true`), sin pedir usuario de Firebase — coherente con que
-  el sistema ya usa una clave simple (ISAAC/DESPACHOG) en vez de una cuenta real
-  por persona. Si más adelante se necesita que cada quien inicie sesión de verdad
-  (para saber quién cambió qué, o restringir por rol), hay que sumar Firebase
-  Authentication — no está hecho porque agrega bastante complejidad para lo que
-  se necesita hoy.
+- **Reglas de seguridad actuales (`firestore.rules`):** el documento `despacho/estado`
+  solo se puede leer o escribir con una sesión real de **Firebase Authentication**
+  (`allow read, write: if request.auth != null`). Antes estaba abierto a cualquiera
+  (`if true`) y el login en pantalla era solo una cortina visual en el navegador —
+  cualquiera que supiera el `projectId` podía leer o borrar los datos directamente
+  por la API de Firestore, sin tocar el login. Eso ya no es así: sin iniciar sesión
+  de verdad contra Firebase Auth, Firestore rechaza la petición con 403, sin
+  importar qué tan bien copiado esté el resto del código.
+- **Login real contra Firebase Auth:** no hay usuario/clave fijos escondidos en el
+  código (ya no existe `LOGIN_USER`/`LOGIN_PASS`). El formulario llama a
+  `firebaseAuthInstance.signInWithEmailAndPassword(correo, clave)`; la cuenta vive
+  en Firebase Auth del proyecto (Console → Authentication → Users), no en el
+  código fuente. La sesión persiste entre recargas (comportamiento por defecto del
+  SDK) hasta que se usa "Cerrar sesión".
+- **La llave del navegador (`apiKey`) está restringida por dominio** (Google Cloud
+  Console → APIs y servicios → Credenciales → esa llave → "Restricciones de
+  aplicación: referentes HTTP") a `despacho-digital-6999f.web.app` y
+  `despacho-digital-6999f.firebaseapp.com`. El `apiKey` sigue sin ser secreto (así
+  lo documenta Google — el control real lo hacen las reglas de arriba), pero esta
+  restricción evita que alguien copie el valor y lo reutilice sirviendo peticiones
+  desde otro sitio con el navegador. Ojo: es una restricción por cabecera
+  `Referer`, útil contra copias casuales del código, no contra un atacante que
+  arma sus peticiones a mano fuera del navegador — la defensa real sigue siendo
+  la regla `request.auth != null`.
 - **El SDK de Firebase se carga dinámicamente** desde `js/app.js`
   (función `ensureFirebase()`), no con una etiqueta `<script src>` fija en el
   HTML. Esto no es casualidad: algunos servicios que sirven el HTML de forma
@@ -56,26 +73,25 @@ archivo. Los botones de descargar/cargar quedan como red de seguridad.
   (`ensureJsPDF()`) y quedó documentada aquí para que quien toque este código no
   vuelva a tropezar con lo mismo.
 - Si `FIREBASE_CONFIG.apiKey` quedara vacío, o el SDK no carga por alguna razón,
-  el sistema cae automáticamente a modo solo-local (`localStorage`) sin romperse
-  — es el mismo comportamiento que tenía antes de conectar Firestore.
+  el sistema cae automáticamente a modo solo-local (`localStorage`) **sin pedir
+  login** — no existe ningún login de emergencia hardcodeado como respaldo; sin
+  Firebase no hay forma de autenticar de verdad, así que no tiene sentido fingir
+  una.
 
 ### Dónde vive el sitio
 
-Ahora mismo se accede vía **htmlpreview.github.io**, que sirve el `index.html` del
-repositorio directamente (sin necesidad de activar nada aparte en GitHub):
+**Firebase Hosting**, no GitHub:
 
 ```
-https://htmlpreview.github.io/?https://github.com/alejo2202119-bot/DESPACHO-DE-GOBERNACION/blob/claude/whatsapp-telegram-migration-uqv0km/index.html
+https://despacho-digital-6999f.web.app
 ```
 
-Es un servicio de terceros pensado para vistas previas rápidas, no para
-producción — funciona, pero con quirks como el de la carga de scripts explicado
-arriba, y una advertencia inofensiva en la consola del navegador por cómo carga
-el CSS dos veces. La alternativa más sólida y profesional, sin cambiar nada del
-código ni de cómo se edita el proyecto, es **GitHub Pages**: sirve exactamente los
-mismos archivos del repositorio, de forma directa (sin reescritura de terceros de
-por medio), con una URL igual de fija, y se actualiza solo con cada `git push` —
-se activa con dos clics en la configuración del repositorio (Settings → Pages).
+Se actualiza con `firebase deploy --only hosting --project despacho-digital-6999f`
+(y `firebase deploy --only firestore:rules --project despacho-digital-6999f` si se
+tocan las reglas). El repositorio de GitHub sigue existiendo como respaldo e
+historial del código para quien lo desarrolla, pero el sitio que usan las personas
+no depende de GitHub para nada — si GitHub desapareciera, el sitio en Firebase
+Hosting sigue funcionando igual.
 
 ## Qué NO debe volver
 
@@ -101,10 +117,8 @@ Están validados en el handler de `form-peticion` en `js/app.js` (busca
 Si tocas ese formulario, mantén esa validación — no la relajes sin que te lo pidan.
 
 Estos datos (cédulas, teléfonos, direcciones) son información personal real de
-ciudadanos. Con las reglas de Firestore actuales (abiertas, sin login de Firebase)
-quien tenga el `projectId` puede leerlos o escribirlos — mismo nivel de exposición
-que ya tenía el resto del sistema con su clave de acceso simple. Tenlo en cuenta si
-en algún momento se maneja información más sensible.
+ciudadanos. Con las reglas de Firestore actuales (`request.auth != null`), solo
+quien inicie sesión real en Firebase Auth puede leerlos o escribirlos.
 
 ## Estructura del proyecto
 

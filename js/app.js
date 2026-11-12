@@ -58,6 +58,7 @@ const FIREBASE_CONFIG = {
 };
 const FIREBASE_ENABLED = !!FIREBASE_CONFIG.apiKey;
 let firestoreDocRef = null;
+let firebaseAuthInstance = null;
 
 function loadScriptOnce(src){
   return new Promise((resolve) => {
@@ -72,19 +73,27 @@ function loadScriptOnce(src){
   });
 }
 
+// Carga Firebase App + Firestore + Authentication. El acceso real al sistema
+// (y a la base de datos compartida) depende de Authentication — las reglas de
+// Firestore exigen "request.auth != null", así que sin este SDK cargado no
+// hay forma de entrar ni de leer/escribir datos (ver firestore.rules).
 async function ensureFirebase(){
   if(!FIREBASE_ENABLED) return false;
-  if(window.firebase && firebase.firestore){
+  if(window.firebase && firebase.firestore && firebase.auth){
     if(!firestoreDocRef) firestoreDocRef = firebase.firestore().collection('despacho').doc('estado');
+    if(!firebaseAuthInstance) firebaseAuthInstance = firebase.auth();
     return true;
   }
   const okApp = await loadScriptOnce('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
   if(!okApp) return false;
   const okFs = await loadScriptOnce('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js');
   if(!okFs) return false;
+  const okAuth = await loadScriptOnce('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');
+  if(!okAuth) return false;
   try{
     firebase.initializeApp(FIREBASE_CONFIG);
     firestoreDocRef = firebase.firestore().collection('despacho').doc('estado');
+    firebaseAuthInstance = firebase.auth();
     return true;
   }catch(e){
     console.error('No se pudo inicializar Firebase', e);
@@ -100,9 +109,12 @@ function updateGuiaPersistenciaText(){
     : '<strong>Todo se guarda solo, al instante.</strong> No existe un botón de "guardar" que se te pueda olvidar apretar. Cierras esta página y la vuelves a abrir, y todo sigue ahí — siempre que sea en este mismo navegador y esta misma computadora.';
 }
 
+let unsubscribeRealtimeSync = null;
+
 function initRealtimeSync(){
   if(!(FIREBASE_ENABLED && firestoreDocRef)) return;
-  firestoreDocRef.onSnapshot((snap) => {
+  if(unsubscribeRealtimeSync) return; // ya hay un listener activo
+  unsubscribeRealtimeSync = firestoreDocRef.onSnapshot((snap) => {
     if(!snap.exists) return;
     const data = snap.data();
     if(!data || !data.json) return;
@@ -113,7 +125,12 @@ function initRealtimeSync(){
       populateSelects();
       renderAll();
     }catch(e){ console.error('Error al sincronizar', e); }
-  }, (err) => console.error('Error de sincronización en tiempo real', err));
+  }, (err) => {
+    // Al cerrar sesión se cancela este listener (ver cerrarSesion) antes de que
+    // Firestore llegue a rechazarlo — si de todos modos llega aquí, es ruido
+    // esperado y no un fallo real del sistema.
+    if(firebaseAuthInstance && firebaseAuthInstance.currentUser) console.error('Error de sincronización en tiempo real', err);
+  });
 }
 
 function bindState(){
@@ -1648,23 +1665,54 @@ document.getElementById('respaldo-file-input').addEventListener('change', (e) =>
   e.target.value = '';
 });
 
-/* ============ LOGIN ============ */
-const LOGIN_USER = 'ISAAC';
-const LOGIN_PASS = 'DESPACHOG';
+/* ============ LOGIN ============
+   Autenticación real contra Firebase Auth (Email/Contraseña) — no hay clave
+   fija escondida en el código. Las reglas de Firestore (ver firestore.rules)
+   exigen una sesión válida, así que sin iniciar sesión aquí no hay acceso a
+   los datos ni aunque alguien copie el código completo del sitio. */
+let appDataCargada = false;
 
-document.getElementById('login-form').addEventListener('submit', (e) => {
+async function entrarAlSistema(){
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('login-error').style.display = 'none';
+  if(appDataCargada) return;
+  appDataCargada = true;
+  await loadData();
+  populateSelects();
+  renderAll();
+  initRealtimeSync();
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const user = document.getElementById('login-user').value.trim();
+  const correo = document.getElementById('login-user').value.trim();
   const pass = document.getElementById('login-pass').value;
-  if(user.toUpperCase() === LOGIN_USER && pass === LOGIN_PASS){
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('login-error').style.display = 'none';
-  } else {
-    document.getElementById('login-error').style.display = 'block';
+  const errorEl = document.getElementById('login-error');
+  const btn = e.target.querySelector('.login-submit');
+  errorEl.style.display = 'none';
+  if(!firebaseAuthInstance){
+    errorEl.textContent = 'No se pudo conectar con el sistema de acceso. Verifica tu conexión e intenta de nuevo.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+  try{
+    await firebaseAuthInstance.signInWithEmailAndPassword(correo, pass);
+    // onAuthStateChanged (más abajo) se encarga de ocultar el overlay y cargar los datos.
+  }catch(err){
+    errorEl.textContent = 'Usuario o contraseña incorrectos.';
+    errorEl.style.display = 'block';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
   }
 });
 
 function cerrarSesion(){
+  if(unsubscribeRealtimeSync){ unsubscribeRealtimeSync(); unsubscribeRealtimeSync = null; }
+  appDataCargada = false;
+  if(firebaseAuthInstance) firebaseAuthInstance.signOut();
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
   document.getElementById('login-error').style.display = 'none';
@@ -1678,10 +1726,22 @@ document.getElementById('msg-modal-open-btn').addEventListener('click', () => {
 /* ============ INIT ============ */
 (async function init(){
   document.getElementById('inbox-list').innerHTML = '<div class="loading">Cargando información del Despacho...</div>';
-  await ensureFirebase();
+  const firebaseOk = await ensureFirebase();
   updateGuiaPersistenciaText();
-  await loadData();
-  populateSelects();
-  renderAll();
-  initRealtimeSync();
+
+  if(!firebaseOk || !firebaseAuthInstance){
+    // Sin Firebase disponible no hay forma de autenticar de verdad — en vez de
+    // reabrir un login falso, el sistema queda en modo solo-local sin pedir clave.
+    document.getElementById('login-overlay').style.display = 'none';
+    await entrarAlSistema();
+    return;
+  }
+
+  firebaseAuthInstance.onAuthStateChanged((user) => {
+    if(user){
+      entrarAlSistema();
+    } else {
+      document.getElementById('login-overlay').style.display = 'flex';
+    }
+  });
 })();
