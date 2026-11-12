@@ -36,10 +36,19 @@ const CONTRAT_ESTADO_LABELS = {en_proceso:'En proceso', aprobada:'Aprobada', eje
 const PETICION_ESTADO_LABELS = {recibida:'Recibida', en_atencion:'En atención', respondida:'Respondida', archivada:'Archivada'};
 
 let STATE = null;
-let DOCS, DEPENDENCIAS, AYUDAS, PARTIDAS, PETICIONES, ORGANISMOS;
+let DOCS, DEPENDENCIAS, AYUDAS, PARTIDAS, PETICIONES, ORGANISMOS, AGENDAS;
 let expandedRow = null;
 let expandedDeps = new Set();
 let expandedPeticion = null;
+
+/* ============ AGENDA POR DIRECCIÓN — estado de la vista ============ */
+let agendaUnidadSel = null;
+let agendaMesVisible = new Date();
+let agendaFechaSel = ymd(new Date());
+
+function ymd(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
 
 /* ============ SINCRONIZACIÓN COMPARTIDA (Firebase) ============
    Proyecto: despacho-digital-6999f (console.firebase.google.com). Todas las
@@ -140,6 +149,9 @@ function bindState(){
   PARTIDAS = STATE.partidas;
   PETICIONES = STATE.peticiones;
   ORGANISMOS = STATE.organismos;
+  // Campo nuevo — los datos guardados antes de esta función no lo traen.
+  if(!Array.isArray(STATE.agendaActividades)) STATE.agendaActividades = [];
+  AGENDAS = STATE.agendaActividades;
 }
 window.__debugState = function(){ return STATE; };
 
@@ -466,7 +478,8 @@ function seedState(){
     ayudas: seedAyudas(),
     partidas: seedPartidas(),
     organismos: seedOrganismos(),
-    peticiones: seedPeticiones()
+    peticiones: seedPeticiones(),
+    agendaActividades: []
   };
 }
 
@@ -861,6 +874,143 @@ async function decidirPartida(partidaId, nuevoEstado){
   renderAll();
   showToast(nuevoEstado === 'aprobada' ? 'Partida autorizada por el Gobernador' : 'Solicitud rechazada');
 }
+
+/* ============ RENDER: AGENDA POR DIRECCIÓN ============ */
+const MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function renderAgenda(){
+  if(!agendaUnidadSel){
+    const todas = getAllOrganismos();
+    if(todas.length) agendaUnidadSel = todas[0].id;
+  }
+  renderAgendaCalendario();
+  renderAgendaDiaLista();
+}
+
+function renderAgendaCalendario(){
+  const grid = document.getElementById('agenda-cal-grid');
+  const label = document.getElementById('agenda-mes-label');
+  if(!grid || !label) return;
+
+  const anio = agendaMesVisible.getFullYear();
+  const mes = agendaMesVisible.getMonth();
+  label.textContent = MESES_LARGO[mes] + ' ' + anio;
+
+  const hoy = ymd(new Date());
+  const actividadesUnidad = AGENDAS.filter(a => a.unidadId === agendaUnidadSel);
+  const conteoPorDia = {};
+  actividadesUnidad.forEach(a => { conteoPorDia[a.fecha] = (conteoPorDia[a.fecha] || 0) + 1; });
+
+  const primerDiaMes = new Date(anio, mes, 1);
+  // Lunes=0 ... Domingo=6 (el sistema usa semana que empieza en lunes)
+  const offset = (primerDiaMes.getDay() + 6) % 7;
+  const inicioGrilla = new Date(anio, mes, 1 - offset);
+
+  let html = '';
+  for(let i = 0; i < 42; i++){
+    const d = new Date(inicioGrilla.getFullYear(), inicioGrilla.getMonth(), inicioGrilla.getDate() + i);
+    const fechaStr = ymd(d);
+    const esDelMes = d.getMonth() === mes;
+    const clases = ['agenda-cal-day'];
+    if(!esDelMes) clases.push('is-fuera-mes');
+    if(fechaStr === hoy) clases.push('is-hoy');
+    if(fechaStr === agendaFechaSel) clases.push('is-seleccionado');
+    const badge = conteoPorDia[fechaStr] ? '<span class="acd-badge">' + conteoPorDia[fechaStr] + '</span>' : '';
+    html += '<div class="' + clases.join(' ') + '" data-fecha="' + fechaStr + '">' + d.getDate() + badge + '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function renderAgendaDiaLista(){
+  const lista = document.getElementById('agenda-dia-lista');
+  const titulo = document.getElementById('agenda-dia-titulo');
+  if(!lista || !titulo) return;
+
+  const unidad = getAllOrganismos().find(u => u.id === agendaUnidadSel);
+  const fechaLegible = fmtDate(agendaFechaSel);
+  titulo.textContent = 'Actividades del ' + fechaLegible + (unidad ? ' — ' + unidad.nombre : '');
+
+  const items = AGENDAS
+    .filter(a => a.unidadId === agendaUnidadSel && a.fecha === agendaFechaSel)
+    .sort((a,b) => (a.creadoEn || '').localeCompare(b.creadoEn || ''));
+
+  if(!items.length){
+    lista.innerHTML = '<p class="agenda-dia-vacio">Todavía no hay nada planificado para este día.</p>';
+    return;
+  }
+
+  lista.innerHTML = items.map(a =>
+    '<div class="agenda-dia-item' + (a.estado === 'realizada' ? ' is-realizada' : '') + '">' +
+      '<span class="adi-texto">' + escapeHtml(a.actividad) + '</span>' +
+      '<div class="adi-acciones">' +
+        '<button type="button" class="btn small" onclick="toggleAgendaEstado(' + a.id + ')">' + (a.estado === 'realizada' ? 'Marcar pendiente' : 'Marcar realizada') + '</button>' +
+        '<button type="button" class="btn small" onclick="eliminarAgendaActividad(' + a.id + ')">Eliminar</button>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
+async function toggleAgendaEstado(id){
+  const a = AGENDAS.find(a => a.id === id);
+  if(!a) return;
+  a.estado = a.estado === 'realizada' ? 'pendiente' : 'realizada';
+  await persist();
+  renderAgenda();
+}
+
+async function eliminarAgendaActividad(id){
+  if(!confirm('¿Eliminar esta actividad de la agenda?')) return;
+  const idx = AGENDAS.findIndex(a => a.id === id);
+  if(idx === -1) return;
+  AGENDAS.splice(idx, 1);
+  await persist();
+  renderAgenda();
+}
+
+document.getElementById('agenda-unidad').addEventListener('change', (e) => {
+  agendaUnidadSel = e.target.value;
+  renderAgenda();
+});
+
+document.getElementById('agenda-mes-prev').addEventListener('click', () => {
+  agendaMesVisible = new Date(agendaMesVisible.getFullYear(), agendaMesVisible.getMonth() - 1, 1);
+  renderAgendaCalendario();
+});
+document.getElementById('agenda-mes-next').addEventListener('click', () => {
+  agendaMesVisible = new Date(agendaMesVisible.getFullYear(), agendaMesVisible.getMonth() + 1, 1);
+  renderAgendaCalendario();
+});
+
+document.getElementById('agenda-cal-grid').addEventListener('click', (e) => {
+  const celda = e.target.closest('.agenda-cal-day');
+  if(!celda) return;
+  agendaFechaSel = celda.dataset.fecha;
+  // Si el día clicado es de otro mes, nos movemos a ese mes para que la grilla lo muestre centrado
+  const [y, m] = agendaFechaSel.split('-').map(Number);
+  if(y !== agendaMesVisible.getFullYear() || (m - 1) !== agendaMesVisible.getMonth()){
+    agendaMesVisible = new Date(y, m - 1, 1);
+  }
+  renderAgendaCalendario();
+  renderAgendaDiaLista();
+});
+
+document.getElementById('form-agenda').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const actividad = document.getElementById('agenda-actividad').value.trim();
+  if(!actividad || !agendaUnidadSel) return;
+  AGENDAS.push({
+    id: Date.now(),
+    unidadId: agendaUnidadSel,
+    fecha: agendaFechaSel,
+    actividad: actividad,
+    estado: 'pendiente',
+    creadoEn: ahoraISO()
+  });
+  await persist();
+  e.target.reset();
+  showToast('Actividad agregada a la agenda');
+  renderAgenda();
+});
 
 /* ============ RENDER: AYUDAS SOCIALES ============ */
 function renderAyudas(){
@@ -1456,12 +1606,20 @@ function populateSelects(){
     '<option value="' + o.id + '">' + escapeHtml(o.nombre) + '</option>'
   ).join('');
   fillSelectPreservingValue('pet-organismo', '<option value="">Sin asignar</option>' + orgOptions);
+  fillSelectPreservingValue('agenda-unidad', orgOptions);
+  if(!agendaUnidadSel){
+    const todas = getAllOrganismos();
+    if(todas.length) agendaUnidadSel = todas[0].id;
+  }
+  const selEl = document.getElementById('agenda-unidad');
+  if(selEl && agendaUnidadSel) selEl.value = agendaUnidadSel;
 }
 
 /* ============ RENDER ALL ============ */
 function renderAll(){
   renderResumen();
   renderDependencias();
+  renderAgenda();
   renderAyudas();
   renderControlCiudadano();
   renderBandeja();

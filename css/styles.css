@@ -337,6 +337,45 @@
   .card-compact .form-grid{grid-template-columns:1fr 1fr 1fr;gap:8px 14px;}
   .card-compact .form-grid .full{grid-column:1/-1;}
   .card-compact .view-title{margin-bottom:10px;}
+
+  /* AGENDA POR DIRECCIÓN */
+  .agenda-cal-card{
+    position:relative;background:var(--surface);border:1px solid var(--line);border-top:none;
+    border-radius:16px;box-shadow:var(--shadow);padding:16px 18px 18px;margin-bottom:16px;overflow:hidden;
+  }
+  .agenda-cal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--flag-stripes);}
+  .agenda-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .agenda-cal-header h3{margin:0;font-family:'Inter',sans-serif;font-size:15px;font-weight:800;letter-spacing:-0.01em;color:var(--navy-deep);text-transform:capitalize;}
+  .agenda-cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;}
+  .agenda-cal-dow span{text-align:center;font-size:11px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.03em;}
+  .agenda-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .agenda-cal-day{
+    position:relative;aspect-ratio:1/0.82;border-radius:10px;border:1px solid var(--line);background:var(--surface-alt);
+    display:flex;flex-direction:column;align-items:flex-end;padding:6px 7px;cursor:pointer;
+    font-size:12px;color:var(--ink);transition:border-color .12s ease, background .12s ease;
+  }
+  .agenda-cal-day:hover{border-color:var(--bronze);}
+  .agenda-cal-day.is-fuera-mes{opacity:0.35;}
+  .agenda-cal-day.is-hoy{border-color:var(--gold-deep);box-shadow:0 0 0 1px var(--gold-deep) inset;}
+  .agenda-cal-day.is-seleccionado{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .agenda-cal-day .acd-badge{
+    position:absolute;bottom:6px;left:7px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;
+    background:var(--flagred);color:#fff;font-size:10px;font-weight:700;line-height:17px;text-align:center;
+  }
+  .agenda-dia-lista{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+  .agenda-dia-item{
+    display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--surface-alt);border-radius:10px;
+    border-left:3px solid var(--bronze);font-size:13px;
+  }
+  .agenda-dia-item.is-realizada{border-left-color:var(--ok);}
+  .agenda-dia-item.is-realizada .adi-texto{color:var(--slate);text-decoration:line-through;}
+  .agenda-dia-item .adi-texto{flex:1;color:var(--ink);}
+  .agenda-dia-item .adi-acciones{display:flex;gap:6px;flex-shrink:0;}
+  .agenda-dia-vacio{color:var(--slate);font-size:12.5px;padding:8px 2px;}
+  @media (max-width:640px){
+    .agenda-cal-day{font-size:10.5px;}
+    .agenda-cal-header h3{font-size:13px;}
+  }
   .toast{
     position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
     background:var(--navy-deep);color:#fff;padding:11px 20px;border-radius:8px;
