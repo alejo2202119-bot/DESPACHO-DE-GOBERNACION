@@ -3,6 +3,27 @@
 Calendario compartido para que cada dependencia o ente de la Gobernación
 planifique, día por día, qué va a hacer.
 
+## Estado del proyecto (actualizado 17/11/2026)
+
+Verificado en vivo, sin errores, en https://despacho-digital-6999f.web.app
+
+Resumen de lo construido hasta ahora:
+
+1. **Hosting en Firebase, no en GitHub.** El sitio que usan las personas corre
+   100% en Firebase Hosting; GitHub quedó solo como respaldo del código.
+2. **Seguridad real.** Login contra Firebase Authentication (ya no hay clave
+   fija en el código) + reglas de Firestore que exigen sesión válida + llave
+   de API restringida al dominio del sitio.
+3. **Una sola función: Agenda por Dirección.** Se retiró todo lo demás
+   (correspondencia, presupuesto, control ciudadano, ayudas sociales, PDF,
+   Telegram) a pedido explícito, dejando solo el calendario compartido por
+   dirección/ente, con alta de nuevas direcciones desde la misma pantalla.
+4. **Carpeta del proyecto, al día:** 6 archivos de código (`index.html`,
+   `css/styles.css`, `js/app.js`, `firebase.json`, `firestore.rules`,
+   `.firebaserc`) + este `README.md` + `assets/logo-gobernacion-banner.png`.
+   Sin archivos sueltos, sin imágenes ni código muerto de funciones ya
+   retiradas.
+
 ## Cómo funciona
 
 Sitio **100% estático** (HTML + CSS + JS, sin servidor propio) conectado a
