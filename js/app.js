@@ -638,6 +638,7 @@ function renderResumen(){
   const totalEjecutado = units.reduce((s,u) => s + presupuestoEjecutado(u), 0);
   const pctGlobal = totalAsignado ? (totalEjecutado / totalAsignado * 100) : 0;
   const pendientesBandeja = DOCS.filter(d => d.estado === 'en_despacho').length;
+  const docsVencidos = DOCS.filter(d => d.estado === 'en_despacho' && isOverdue(d));
   const ayudasEjecutadas = AYUDAS.filter(a => a.estado === 'ejecutada');
   const montoAyudasEjecutadas = ayudasEjecutadas.reduce((s,a) => s + a.monto, 0);
 
@@ -650,6 +651,11 @@ function renderResumen(){
     '<div class="label">Pendientes de firma</div>' +
     '<div class="value">' + pendientesBandeja + '</div>' +
     '<div class="sub">En la Bandeja del Gobernador</div>';
+
+  document.getElementById('stat-vencidos').innerHTML =
+    '<div class="label">Documentos vencidos</div>' +
+    '<div class="value">' + docsVencidos.length + '</div>' +
+    '<div class="sub">' + (docsVencidos.length ? 'Pendientes de firma, fuera de plazo' : 'Ninguno fuera de plazo') + '</div>';
 
   document.getElementById('stat-ayudas').innerHTML =
     '<div class="label">Ayudas sociales ejecutadas</div>' +
