@@ -98,6 +98,7 @@
   }
   .footer-logos{display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:center;}
   .footer-logos img{height:44px;width:auto;}
+  .footer-logo-bernal{height:56px;}
   .footer-text{font-size:11.5px;color:var(--slate);margin:0;text-align:center;}
 
   .view{display:none;}
