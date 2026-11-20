@@ -624,52 +624,62 @@ function computeAlerts(){
 }
 
 /* ============ RENDER: RESUMEN ============ */
+const STAT_ICONS = {
+  presupuesto: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  bandeja: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  vencidos: '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  ayudas: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+  dependencias: '<line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 21 9 3 9"/>',
+  ciudadano: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
+};
+function statIcon(nombre){
+  return '<span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + STAT_ICONS[nombre] + '</svg></span>';
+}
+
 function renderResumen(){
   const alerts = computeAlerts();
-  document.getElementById('count-resumen').textContent = alerts.length;
-
-  const alertList = document.getElementById('alert-list');
-  alertList.innerHTML = alerts.length === 0
-    ? '<div class="empty-state"><div class="icon">✓</div>No hay alertas activas en este momento.</div>'
-    : alerts.map(a => '<div class="alert sev-' + a.severidad + '"><span class="dot">●</span><span>' + escapeHtml(a.texto) + '</span></div>').join('');
+  const docsVencidosAlerta = alerts.filter(a => a.severidad === 'alta').length;
+  document.getElementById('count-resumen').textContent = docsVencidosAlerta;
 
   const units = getAllUnits();
   const totalAsignado = units.reduce((s,u) => s + u.presupuestoAsignado, 0);
   const totalEjecutado = units.reduce((s,u) => s + presupuestoEjecutado(u), 0);
   const pctGlobal = totalAsignado ? (totalEjecutado / totalAsignado * 100) : 0;
+  const barClassGlobal = pctGlobal >= 95 ? 'danger' : pctGlobal >= 85 ? 'warn' : 'ok';
   const pendientesBandeja = DOCS.filter(d => d.estado === 'en_despacho').length;
   const docsVencidos = DOCS.filter(d => d.estado === 'en_despacho' && isOverdue(d));
   const ayudasEjecutadas = AYUDAS.filter(a => a.estado === 'ejecutada');
   const montoAyudasEjecutadas = ayudasEjecutadas.reduce((s,a) => s + a.monto, 0);
 
   document.getElementById('stat-presupuesto').innerHTML =
-    '<div class="label">Presupuesto ejecutado / asignado</div>' +
+    '<div class="stat-card-head">' + statIcon('presupuesto') + '<div class="label">Presupuesto ejecutado / asignado</div></div>' +
     '<div class="value">' + fmtMoney(totalEjecutado) + ' <span style="font-size:13px;color:var(--slate);">/ ' + fmtMoney(totalAsignado) + '</span></div>' +
+    '<div class="progress-track"><div class="progress-fill ' + barClassGlobal + '" style="width:' + Math.min(100,pctGlobal) + '%"></div></div>' +
     '<div class="sub">' + pctGlobal.toFixed(1) + '% de ejecución global</div>';
 
   document.getElementById('stat-bandeja').innerHTML =
-    '<div class="label">Pendientes de firma</div>' +
+    '<div class="stat-card-head">' + statIcon('bandeja') + '<div class="label">Pendientes de firma</div></div>' +
     '<div class="value">' + pendientesBandeja + '</div>' +
     '<div class="sub">En la Bandeja del Gobernador</div>';
 
   document.getElementById('stat-vencidos').innerHTML =
-    '<div class="label">Documentos vencidos</div>' +
+    '<div class="stat-card-head">' + statIcon('vencidos') + '<div class="label">Documentos vencidos</div></div>' +
     '<div class="value">' + docsVencidos.length + '</div>' +
     '<div class="sub">' + (docsVencidos.length ? 'Pendientes de firma, fuera de plazo' : 'Ninguno fuera de plazo') + '</div>';
 
   document.getElementById('stat-ayudas').innerHTML =
-    '<div class="label">Ayudas sociales ejecutadas</div>' +
+    '<div class="stat-card-head">' + statIcon('ayudas') + '<div class="label">Ayudas sociales ejecutadas</div></div>' +
     '<div class="value">' + ayudasEjecutadas.length + '</div>' +
     '<div class="sub">' + fmtMoney(montoAyudasEjecutadas) + ' entregados</div>';
 
   document.getElementById('stat-dependencias').innerHTML =
-    '<div class="label">Dependencias activas</div>' +
+    '<div class="stat-card-head">' + statIcon('dependencias') + '<div class="label">Dependencias activas</div></div>' +
     '<div class="value">' + DEPENDENCIAS.length + '</div>' +
     '<div class="sub">' + units.length + ' unidades presupuestarias</div>';
 
   const peticionesPendientes = PETICIONES.filter(p => p.estado === 'recibida' || p.estado === 'en_atencion').length;
   document.getElementById('stat-ciudadano').innerHTML =
-    '<div class="label">Peticiones ciudadanas pendientes</div>' +
+    '<div class="stat-card-head">' + statIcon('ciudadano') + '<div class="label">Peticiones ciudadanas pendientes</div></div>' +
     '<div class="value">' + peticionesPendientes + '</div>' +
     '<div class="sub">' + PETICIONES.length + ' registradas en total</div>';
 }

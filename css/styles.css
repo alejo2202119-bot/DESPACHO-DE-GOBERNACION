@@ -168,17 +168,19 @@
   .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
   .stat-card.acc-gold{border-left-color:var(--gold-deep);background:linear-gradient(165deg, var(--surface) 60%, var(--gold-bg));}
   .stat-card.acc-red{border-left-color:var(--flagred);background:linear-gradient(165deg, var(--surface) 60%, var(--danger-bg));}
-  .stat-card .label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;color:var(--slate);font-weight:700;margin-bottom:6px;}
+  .stat-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;}
+  .stat-card .label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;color:var(--slate);font-weight:700;}
+  .stat-icon{
+    width:26px;height:26px;flex-shrink:0;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,45,143,0.08);color:var(--navy);
+  }
+  .stat-card.acc-gold .stat-icon{background:rgba(217,156,0,0.12);color:var(--gold-deep);}
+  .stat-card.acc-red .stat-icon{background:rgba(208,17,43,0.1);color:var(--flagred);}
+  .stat-icon svg{width:15px;height:15px;}
   .stat-card .value{font-family:'Inter',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:var(--navy-deep);}
+  .stat-card .progress-track{margin-top:9px;height:6px;}
   .stat-card .sub{font-size:11.5px;color:var(--slate);margin-top:5px;}
-
-  /* ALERTS */
-  .alert-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
-  .alert{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-radius:12px;font-size:13px;border-left:4px solid;background:var(--surface);}
-  .alert.sev-alta{border-color:var(--danger);color:var(--danger);background:var(--danger-bg);}
-  .alert.sev-media{border-color:var(--warn);color:var(--warn);background:var(--warn-bg);}
-  .alert.sev-baja{border-color:var(--navy);color:var(--navy);background:#E7EEF6;}
-  .alert .dot{font-weight:800;font-size:14px;line-height:1.4;}
 
   /* DEPENDENCIAS */
   .dep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;}
